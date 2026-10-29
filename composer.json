@@ -1,0 +1,7 @@
+{
+    "name": "kubasanitrak/lkba-events",
+    "description": "LKBA events and teacher-training bookings for WordPress",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "require": {}
+}
