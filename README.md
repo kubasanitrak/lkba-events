@@ -8,7 +8,7 @@ Repository: https://github.com/kubasanitrak/lkba-events
 
 ## Status
 
-Phase 2 — bank-first booking MVP (Comgate on events = Phase 3).
+Phase 3 — bank + Comgate card on events; my bookings + invoice download. Vouchers = Phase 4.
 
 ## Shortcodes
 
@@ -16,8 +16,10 @@ Phase 2 — bank-first booking MVP (Comgate on events = Phase 3).
 |-----------|---------|
 | `[lkba_event_categories]` | Category list |
 | `[lkba_events_list book_page="/cesta-k-formi/"]` | Open + past events |
-| `[lkba_event_book]` | Booking form + bank recap (`?event_id=` / `?lkba_book=ok&recap=`) |
-| `[lkba_my_bookings]` | Account overview (after paid user exists) |
+| `[lkba_event_book]` | Booking form + bank recap / Comgate redirect |
+| `[lkba_payment_success]` | Comgate return (paid / pending) |
+| `[lkba_payment_failed]` | Comgate return (cancel / fail) |
+| `[lkba_my_bookings]` | Account overview + invoice PDF + mailto cancel/reschedule |
 
 Support / cancel mailto: `rezervace@barreacademy.cz` (settings).
 
@@ -25,4 +27,4 @@ Support / cancel mailto: `rezervace@barreacademy.cz` (settings).
 
 1. Bump `Version` and `LKBA_EVENTS_VERSION`.
 2. Update `CHANGELOG.md`.
-3. Tag `v0.2.0`.
+3. Tag `v0.3.0`.

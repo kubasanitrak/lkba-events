@@ -218,4 +218,42 @@ class LKBA_Events_Event {
         }
         return $start;
     }
+
+    /**
+     * Payment methods allowed for this event ∩ company credentials.
+     *
+     * @param int $event_id
+     * @return string[] Values: bank_transfer, comgate
+     */
+    public static function get_allowed_payment_methods($event_id) {
+        $meta    = self::get_meta($event_id);
+        $company = $meta['company_id'] !== '' ? $meta['company_id'] : 'company-1';
+        $mode    = $meta['payment_methods'] ?: 'bank_transfer';
+
+        $event_methods = array();
+        if ($mode === 'card') {
+            $event_methods = array('comgate');
+        } elseif ($mode === 'bank_transfer') {
+            $event_methods = array('bank_transfer');
+        } else {
+            $event_methods = array('bank_transfer', 'comgate');
+        }
+
+        $company_methods = array('bank_transfer');
+        if (class_exists('LKBA_Payments_Gateway')) {
+            $company_methods = LKBA_Payments_Gateway::allowed_methods($company);
+        }
+        if (!$company_methods) {
+            $company_methods = array('bank_transfer');
+        }
+
+        // If company lists comgate but Comgate not configured, drop it.
+        if (in_array('comgate', $company_methods, true) && class_exists('LKBA_Payments_Comgate')) {
+            if (!LKBA_Payments_Comgate::for_company($company)->is_configured()) {
+                $company_methods = array_values(array_diff($company_methods, array('comgate')));
+            }
+        }
+
+        return array_values(array_intersect($event_methods, $company_methods));
+    }
 }

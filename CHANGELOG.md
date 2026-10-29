@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.3.0] — 2026-10-29
+
+### Added
+
+- Phase 3 card + account: Comgate when event∩company allow card; payment success/fail pages + shortcodes; invoice download for owners; hardened `[lkba_my_bookings]` with cancel/reschedule mailto `rezervace@barreacademy.cz`.
+- Admin: email attendees of a picked event; stats filters by instructor & place; booking list filters by event.
+- Settings: payment success / failed page IDs for Comgate return URLs.
+- Hook `lkba_payments_fakturoid_invoice_after_card` → store Fakturoid meta (invoice only after Comgate paid).
+
 ## [0.2.0] — 2026-10-29
 
 ### Added

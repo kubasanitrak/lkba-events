@@ -15,6 +15,7 @@ class LKBA_Events_Admin {
         add_action('admin_menu', array($this, 'register_menu'), 5);
         add_filter('register_post_type_args', array($this, 'attach_cpt_to_menu'), 10, 2);
         add_action('admin_init', array($this, 'handle_save_settings'));
+        add_action('admin_init', array($this, 'handle_attendee_email'));
         add_action('add_meta_boxes', array($this, 'add_meta_boxes'));
         add_action('save_post_' . LKBA_Events_Post_Types::POST_TYPE_EVENT, array($this, 'save_event_meta'), 10, 2);
         add_action(LKBA_Events_Post_Types::TAX_CATEGORY . '_add_form_fields', array($this, 'category_add_field'));
@@ -175,13 +176,59 @@ class LKBA_Events_Admin {
         if (!current_user_can('edit_posts')) {
             return;
         }
-        $status = isset($_GET['status']) ? sanitize_key(wp_unslash($_GET['status'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-        $args   = array('limit' => 200);
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended — read-only filters
+        $status            = isset($_GET['status']) ? sanitize_key(wp_unslash($_GET['status'])) : '';
+        $filter_event      = isset($_GET['event_id']) ? absint($_GET['event_id']) : 0;
+        $filter_instructor = isset($_GET['instructor']) ? sanitize_text_field(wp_unslash($_GET['instructor'])) : '';
+        $filter_place      = isset($_GET['place']) ? sanitize_text_field(wp_unslash($_GET['place'])) : '';
+
+        $args = array('limit' => 500);
         if ($status !== '') {
             $args['status'] = $status;
         }
+        if ($filter_event > 0) {
+            $args['event_id'] = $filter_event;
+        }
         $bookings = LKBA_Events_Bookings::query($args);
+        $choices  = LKBA_Events_Bookings::meta_filter_choices();
+        $stats    = LKBA_Events_Bookings::stats(array(
+            'instructor' => $filter_instructor,
+            'place'      => $filter_place,
+            'status'     => $status,
+        ));
+        $email_result = get_transient('lkba_events_attendee_email_result');
+        if ($email_result) {
+            delete_transient('lkba_events_attendee_email_result');
+        }
         include LKBA_EVENTS_PLUGIN_DIR . 'admin/partials/bookings-page.php';
+    }
+
+    public function handle_attendee_email() {
+        if (!isset($_POST['lkba_attendee_email_nonce'])) {
+            return;
+        }
+        if (!current_user_can('edit_posts')) {
+            return;
+        }
+        if (!wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['lkba_attendee_email_nonce'])), 'lkba_events_attendee_email')) {
+            return;
+        }
+
+        $event_id = isset($_POST['lkba_email_event_id']) ? absint($_POST['lkba_email_event_id']) : 0;
+        $subject  = isset($_POST['lkba_email_subject']) ? sanitize_text_field(wp_unslash($_POST['lkba_email_subject'])) : '';
+        $body     = isset($_POST['lkba_email_body']) ? wp_kses_post(wp_unslash($_POST['lkba_email_body'])) : '';
+        $status_f = isset($_POST['lkba_email_status']) ? sanitize_key(wp_unslash($_POST['lkba_email_status'])) : '';
+
+        if (!$event_id || $subject === '' || $body === '') {
+            set_transient('lkba_events_attendee_email_result', array('sent' => 0, 'skipped' => 0, 'errors' => 1), 60);
+            wp_safe_redirect(admin_url('admin.php?page=lkba-events-bookings'));
+            exit;
+        }
+
+        $result = LKBA_Events_Emails::send_attendees($event_id, $subject, $body, $status_f);
+        set_transient('lkba_events_attendee_email_result', $result, 60);
+        wp_safe_redirect(admin_url('admin.php?page=lkba-events-bookings&event_id=' . $event_id));
+        exit;
     }
 
     public function handle_save_settings() {
@@ -216,6 +263,8 @@ class LKBA_Events_Admin {
         update_option(LKBA_Events_Settings::OPTION_TERMS_PAGE, isset($_POST['lkba_terms_page']) ? absint($_POST['lkba_terms_page']) : 0);
         update_option(LKBA_Events_Settings::OPTION_PRIVACY_PAGE, isset($_POST['lkba_privacy_page']) ? absint($_POST['lkba_privacy_page']) : 0);
         update_option(LKBA_Events_Settings::OPTION_STORNO_PAGE, isset($_POST['lkba_storno_page']) ? absint($_POST['lkba_storno_page']) : 0);
+        update_option(LKBA_Events_Settings::OPTION_SUCCESS_PAGE, isset($_POST['lkba_success_page']) ? absint($_POST['lkba_success_page']) : 0);
+        update_option(LKBA_Events_Settings::OPTION_FAILED_PAGE, isset($_POST['lkba_failed_page']) ? absint($_POST['lkba_failed_page']) : 0);
 
         add_settings_error('lkba_events', 'saved', __('Nastavení uloženo.', 'lkba-events'), 'updated');
     }

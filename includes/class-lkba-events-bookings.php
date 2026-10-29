@@ -85,7 +85,7 @@ class LKBA_Events_Bookings {
             'event_id'       => $event_id,
             'status'         => 'pending',
             'payment_status' => 'awaiting',
-            'payment_method' => 'bank_transfer',
+            'payment_method' => !empty($data['payment_method']) ? sanitize_key($data['payment_method']) : 'bank_transfer',
             'total'          => $total,
             'currency'       => 'CZK',
             'company_id'     => $company !== '' ? $company : 'company-1',
@@ -261,6 +261,10 @@ class LKBA_Events_Bookings {
             $where[]  = 'event_id = %d';
             $params[] = (int) $args['event_id'];
         }
+        if (!empty($args['user_id'])) {
+            $where[]  = 'user_id = %d';
+            $params[] = (int) $args['user_id'];
+        }
         if (!empty($args['status'])) {
             $where[]  = 'status = %s';
             $params[] = $args['status'];
@@ -326,6 +330,115 @@ class LKBA_Events_Bookings {
                 'booking_id' => (int) $booking->id,
                 'event_id'   => (int) $booking->event_id,
             ),
+        );
+    }
+
+    /**
+     * Secure front invoice download URL (owner must be logged in).
+     *
+     * @param int $booking_id
+     * @return string
+     */
+    public static function invoice_download_url($booking_id) {
+        $booking_id = (int) $booking_id;
+        return add_query_arg(array(
+            'lkba_invoice' => $booking_id,
+            '_wpnonce'     => wp_create_nonce('lkba_invoice_' . $booking_id),
+        ), home_url('/'));
+    }
+
+    /**
+     * Distinct instructor / place values from published events (admin filters).
+     *
+     * @return array{instructors:string[],places:string[]}
+     */
+    public static function meta_filter_choices() {
+        $instructors = array();
+        $places      = array();
+        foreach (LKBA_Events_Event::query_events(array('posts_per_page' => 200, 'post_status' => array('publish', 'draft'))) as $post) {
+            $meta = LKBA_Events_Event::get_meta($post->ID);
+            if ($meta['instructor'] !== '') {
+                $instructors[$meta['instructor']] = $meta['instructor'];
+            }
+            if ($meta['place_name'] !== '') {
+                $places[$meta['place_name']] = $meta['place_name'];
+            }
+        }
+        natcasesort($instructors);
+        natcasesort($places);
+        return array(
+            'instructors' => array_values($instructors),
+            'places'      => array_values($places),
+        );
+    }
+
+    /**
+     * Stats: booking counts filtered by event instructor / place meta.
+     *
+     * @param array $args instructor?, place?, status?
+     * @return array{total:int,by_status:array<string,int>,by_payment:array<string,int>,events:array}
+     */
+    public static function stats(array $args = array()) {
+        $instructor = isset($args['instructor']) ? (string) $args['instructor'] : '';
+        $place      = isset($args['place']) ? (string) $args['place'] : '';
+        $status     = isset($args['status']) ? (string) $args['status'] : '';
+
+        $event_ids = null;
+        if ($instructor !== '' || $place !== '') {
+            $event_ids = array();
+            foreach (LKBA_Events_Event::query_events(array('posts_per_page' => 200, 'post_status' => array('publish', 'draft', 'private'))) as $post) {
+                $meta = LKBA_Events_Event::get_meta($post->ID);
+                if ($instructor !== '' && $meta['instructor'] !== $instructor) {
+                    continue;
+                }
+                if ($place !== '' && $meta['place_name'] !== $place) {
+                    continue;
+                }
+                $event_ids[] = (int) $post->ID;
+            }
+            if (!$event_ids) {
+                return array(
+                    'total'      => 0,
+                    'by_status'  => array(),
+                    'by_payment' => array(),
+                    'events'     => array(),
+                );
+            }
+        }
+
+        $bookings = self::query(array('limit' => 2000));
+        $by_status  = array();
+        $by_payment = array();
+        $events     = array();
+        $total      = 0;
+
+        foreach ($bookings as $b) {
+            if ($event_ids !== null && !in_array((int) $b->event_id, $event_ids, true)) {
+                continue;
+            }
+            if ($status !== '' && $b->status !== $status) {
+                continue;
+            }
+            $total++;
+            $by_status[$b->status] = ($by_status[$b->status] ?? 0) + 1;
+            $by_payment[$b->payment_status] = ($by_payment[$b->payment_status] ?? 0) + 1;
+            $eid = (int) $b->event_id;
+            if (!isset($events[$eid])) {
+                $post  = get_post($eid);
+                $events[$eid] = array(
+                    'event_id' => $eid,
+                    'title'    => $post ? $post->post_title : '#' . $eid,
+                    'count'    => 0,
+                );
+            }
+            $events[$eid]['count']++;
+        }
+
+        return array(
+            'total'      => $total,
+            'by_status'  => $by_status,
+            'by_payment' => $by_payment,
+            'events'     => array_values($events),
         );
     }
 

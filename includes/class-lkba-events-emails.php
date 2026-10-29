@@ -47,6 +47,8 @@ class LKBA_Events_Emails {
 
         if ($instructions_html !== '') {
             $inner .= $instructions_html;
+        } elseif (($booking->payment_method ?? '') === 'comgate') {
+            $inner .= '<p>' . esc_html__('Platbu kartou dokončete v platební bráně Comgate. Po úspěšné platbě přijde potvrzení e-mailem.', 'lkba-events') . '</p>';
         }
 
         $inner .= '<p>' . esc_html__('Pro zrušení nebo změnu termínu napište na', 'lkba-events')
@@ -60,6 +62,50 @@ class LKBA_Events_Emails {
         );
 
         return self::send($email, $subject, __('Potvrzení rezervace', 'lkba-events'), $inner);
+    }
+
+    /**
+     * Admin blast to attendees of one event.
+     *
+     * @param int    $event_id
+     * @param string $subject
+     * @param string $body_html
+     * @param string $status_filter pending|confirmed|'' (active seats)
+     * @return array{sent:int,skipped:int,errors:int}
+     */
+    public static function send_attendees($event_id, $subject, $body_html, $status_filter = '') {
+        $event_id = (int) $event_id;
+        $rows     = LKBA_Events_Bookings::query(array(
+            'event_id' => $event_id,
+            'limit'    => 500,
+        ));
+        $sent = $skipped = $errors = 0;
+        foreach ($rows as $b) {
+            if ($status_filter !== '' && $b->status !== $status_filter) {
+                $skipped++;
+                continue;
+            }
+            if (!in_array($b->status, array('pending', 'confirmed', 'rescheduled'), true)) {
+                $skipped++;
+                continue;
+            }
+            if (in_array($b->payment_status, array('failed', 'expired'), true)) {
+                $skipped++;
+                continue;
+            }
+            $to = $b->customer_data['email'] ?? '';
+            if ($to === '' || !is_email($to)) {
+                $skipped++;
+                continue;
+            }
+            $ok = self::send($to, $subject, $subject, wpautop(wp_kses_post($body_html)));
+            if ($ok) {
+                $sent++;
+            } else {
+                $errors++;
+            }
+        }
+        return compact('sent', 'skipped', 'errors');
     }
 
     /**

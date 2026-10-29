@@ -16,10 +16,12 @@ $sender_email  = LKBA_Events_Settings::get_sender_email();
 $terms_page    = (int) get_option(LKBA_Events_Settings::OPTION_TERMS_PAGE, 0);
 $privacy_page  = (int) get_option(LKBA_Events_Settings::OPTION_PRIVACY_PAGE, 0);
 $storno_page   = (int) get_option(LKBA_Events_Settings::OPTION_STORNO_PAGE, 0);
+$success_page  = (int) get_option(LKBA_Events_Settings::OPTION_SUCCESS_PAGE, 0);
+$failed_page   = (int) get_option(LKBA_Events_Settings::OPTION_FAILED_PAGE, 0);
 ?>
 <div class="wrap">
     <h1><?php echo esc_html__('Nastavení událostí', 'lkba-events'); ?></h1>
-    <p><?php echo esc_html__('Phase 2 — bank-first booking. Guest checkout; WP účet po zaplacení.', 'lkba-events'); ?></p>
+    <p><?php echo esc_html__('Phase 3 — bank + Comgate card. Guest checkout; WP účet po zaplacení.', 'lkba-events'); ?></p>
 
     <form method="post" action="">
         <?php wp_nonce_field('lkba_events_save_settings', 'lkba_events_settings_nonce'); ?>
@@ -75,6 +77,30 @@ $storno_page   = (int) get_option(LKBA_Events_Settings::OPTION_STORNO_PAGE, 0);
                         'option_none_value' => '0',
                     )); ?>
                     <p class="description">https://barreacademy.cz/podminky-storna-teacher-training/</p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><?php echo esc_html__('Payment success page', 'lkba-events'); ?></th>
+                <td>
+                    <?php wp_dropdown_pages(array(
+                        'name'              => 'lkba_success_page',
+                        'selected'          => $success_page,
+                        'show_option_none'  => __('— Select —', 'lkba-events'),
+                        'option_none_value' => '0',
+                    )); ?>
+                    <p class="description"><?php echo esc_html__('Shortcode: [lkba_payment_success] — Comgate url_paid.', 'lkba-events'); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><?php echo esc_html__('Payment failed page', 'lkba-events'); ?></th>
+                <td>
+                    <?php wp_dropdown_pages(array(
+                        'name'              => 'lkba_failed_page',
+                        'selected'          => $failed_page,
+                        'show_option_none'  => __('— Select —', 'lkba-events'),
+                        'option_none_value' => '0',
+                    )); ?>
+                    <p class="description"><?php echo esc_html__('Shortcode: [lkba_payment_failed] — Comgate url_cancelled.', 'lkba-events'); ?></p>
                 </td>
             </tr>
         </table>

@@ -18,6 +18,7 @@ class LKBA_Events_Payments {
         add_filter('lkba_payments_resolve_fakturoid', array(__CLASS__, 'resolve_fakturoid'), 10, 3);
         add_action('lkba_payments_fakturoid_proforma_created', array(__CLASS__, 'on_proforma_created'), 10, 2);
         add_action('lkba_payments_fakturoid_document_synced', array(__CLASS__, 'on_document_synced'), 10, 2);
+        add_action('lkba_payments_fakturoid_invoice_after_card', array(__CLASS__, 'on_invoice_after_card'), 10, 2);
     }
 
     public static function register() {
@@ -192,6 +193,27 @@ class LKBA_Events_Payments {
         if ($fields) {
             LKBA_Events_Bookings::update((int) $booking->id, $fields);
         }
+    }
+
+    /**
+     * Card path: Fakturoid invoice created only after Comgate paid (decision §4).
+     *
+     * @param array $context
+     * @param array $invoice
+     */
+    public static function on_invoice_after_card($context, $invoice) {
+        $booking = LKBA_Events_Bookings::get_by_number($context['ref_id'] ?? '');
+        if (!$booking || !is_array($invoice)) {
+            return;
+        }
+        $fields = array(
+            'fakturoid_invoice_id'      => (string) ($invoice['invoice_id'] ?? $invoice['id'] ?? ''),
+            'fakturoid_invoice_number'  => (string) ($invoice['number'] ?? ''),
+            'fakturoid_variable_symbol' => preg_replace('/\D/', '', (string) ($invoice['variable_symbol'] ?? '')),
+            'fakturoid_pdf'             => (string) ($invoice['pdf'] ?? ''),
+        );
+        LKBA_Events_Bookings::update((int) $booking->id, array_filter($fields));
+        // Paid confirmation already sent in handle_paid; PDF is available via my bookings download.
     }
 
     /**

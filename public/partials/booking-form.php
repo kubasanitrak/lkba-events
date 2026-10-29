@@ -1,6 +1,6 @@
 <?php
 /**
- * Booking form (guest, bank-first).
+ * Booking form (bank + optional Comgate card).
  *
  * @var int    $event_id
  * @var array  $draft
@@ -10,6 +10,9 @@
  * @var int    $privacy
  * @var int    $terms_p
  * @var int    $storno
+ * @var array  $payment_methods
+ * @var string $draft_method
+ * @var array  $methods_by_event
  */
 
 if (!defined('ABSPATH')) {
@@ -21,6 +24,9 @@ $d_email = $draft['email'] ?? '';
 $d_phone = $draft['phone'] ?? '';
 $d_notes = $draft['notes'] ?? '';
 $d_inv   = isset($draft['invoice']) && is_array($draft['invoice']) ? $draft['invoice'] : array();
+$selected_method = $draft_method !== '' && in_array($draft_method, $payment_methods, true)
+    ? $draft_method
+    : ($payment_methods[0] ?? 'bank_transfer');
 ?>
 <div class="lkba-events lkba-booking-form">
     <h2><?php echo esc_html__('Rezervace', 'lkba-events'); ?></h2>
@@ -81,6 +87,22 @@ $d_inv   = isset($draft['invoice']) && is_array($draft['invoice']) ? $draft['inv
                 </p>
             </fieldset>
 
+            <fieldset class="lkba-booking-form__payment" id="lkba_payment_methods">
+                <legend><?php echo esc_html__('Způsob platby', 'lkba-events'); ?></legend>
+                <p class="lkba-booking-form__pay-bank" <?php echo in_array('bank_transfer', $payment_methods, true) ? '' : 'hidden'; ?>>
+                    <label>
+                        <input type="radio" name="lkba_payment_method" value="bank_transfer" <?php checked($selected_method, 'bank_transfer'); ?>>
+                        <?php echo esc_html__('Bankovní převod (QR / proforma)', 'lkba-events'); ?>
+                    </label>
+                </p>
+                <p class="lkba-booking-form__pay-card" <?php echo in_array('comgate', $payment_methods, true) ? '' : 'hidden'; ?>>
+                    <label>
+                        <input type="radio" name="lkba_payment_method" value="comgate" <?php checked($selected_method, 'comgate'); ?>>
+                        <?php echo esc_html__('Platební karta (Comgate)', 'lkba-events'); ?>
+                    </label>
+                </p>
+            </fieldset>
+
             <p class="lkba-booking-form__legal">
                 <label>
                     <input type="checkbox" name="lkba_legal" value="1" required>
@@ -97,14 +119,36 @@ $d_inv   = isset($draft['invoice']) && is_array($draft['invoice']) ? $draft['inv
                 </label>
             </p>
 
-            <p class="lkba-booking-form__paynote">
-                <?php echo esc_html__('Platba: bankovní převod (QR a údaje v e-mailu a na rekapitulaci).', 'lkba-events'); ?>
-            </p>
-
             <p>
                 <button type="submit" class="lkba-booking-form__submit"><?php echo esc_html__('Rezervovat', 'lkba-events'); ?></button>
             </p>
         </form>
+
+        <script>
+        (function () {
+            var map = <?php echo wp_json_encode($methods_by_event); ?>;
+            var select = document.getElementById('lkba_event_id');
+            var bank = document.querySelector('.lkba-booking-form__pay-bank');
+            var card = document.querySelector('.lkba-booking-form__pay-card');
+            if (!select || !bank || !card) return;
+            function sync() {
+                var methods = map[String(select.value)] || ['bank_transfer'];
+                var hasBank = methods.indexOf('bank_transfer') !== -1;
+                var hasCard = methods.indexOf('comgate') !== -1;
+                bank.hidden = !hasBank;
+                card.hidden = !hasCard;
+                var bankRadio = bank.querySelector('input');
+                var cardRadio = card.querySelector('input');
+                if (hasBank && (!hasCard || (bankRadio && bankRadio.checked) || (cardRadio && !cardRadio.checked))) {
+                    if (bankRadio) bankRadio.checked = true;
+                } else if (hasCard && cardRadio) {
+                    cardRadio.checked = true;
+                }
+            }
+            select.addEventListener('change', sync);
+            sync();
+        })();
+        </script>
     <?php endif; ?>
 
     <p class="lkba-booking-form__support">

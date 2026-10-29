@@ -1,6 +1,6 @@
 <?php
 /**
- * Front shortcodes — list, book, my bookings stub.
+ * Front shortcodes — list, book, payment return, my bookings.
  */
 
 if (!defined('ABSPATH')) {
@@ -14,6 +14,8 @@ class LKBA_Events_Shortcodes {
         add_shortcode('lkba_events_list', array($this, 'render_list'));
         add_shortcode('lkba_event_book', array($this, 'render_book'));
         add_shortcode('lkba_my_bookings', array($this, 'render_my_bookings'));
+        add_shortcode('lkba_payment_success', array($this, 'render_payment_success'));
+        add_shortcode('lkba_payment_failed', array($this, 'render_payment_failed'));
     }
 
     /**
@@ -111,8 +113,73 @@ class LKBA_Events_Shortcodes {
         $terms_p = (int) get_option(LKBA_Events_Settings::OPTION_TERMS_PAGE, 0);
         $storno  = (int) get_option(LKBA_Events_Settings::OPTION_STORNO_PAGE, 0);
 
+        $payment_methods = $event_id ? LKBA_Events_Event::get_allowed_payment_methods($event_id) : array('bank_transfer');
+        $draft_method    = isset($draft['payment_method']) ? sanitize_key($draft['payment_method']) : '';
+
+        // Methods map for JS when switching event in the select.
+        $methods_by_event = array();
+        foreach ($events_open as $post) {
+            $methods_by_event[(string) $post->ID] = LKBA_Events_Event::get_allowed_payment_methods($post->ID);
+        }
+
         ob_start();
         include LKBA_EVENTS_PLUGIN_DIR . 'public/partials/booking-form.php';
+        return (string) ob_get_clean();
+    }
+
+    /**
+     * Comgate success / pending return page.
+     *
+     * @param array|string $atts
+     * @return string
+     */
+    public function render_payment_success($atts = array()) {
+        $ref = isset($_GET['ref']) ? sanitize_text_field(wp_unslash($_GET['ref'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        if ($ref === '' && isset($_GET['refId'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+            $ref = sanitize_text_field(wp_unslash($_GET['refId']));
+        }
+
+        $booking = $ref !== '' ? LKBA_Events_Bookings::get_by_number($ref) : null;
+        $verified = false;
+
+        if ($booking && $booking->payment_status !== 'paid' && class_exists('LKBA_Payments_Comgate')) {
+            $context = LKBA_Events_Bookings::to_payment_context($booking);
+            $verified = LKBA_Payments_Comgate::for_company((string) $booking->company_id)
+                ->complete_from_return($context, (string) $booking->transaction_id);
+            if ($verified) {
+                $booking = LKBA_Events_Bookings::get((int) $booking->id);
+            }
+        }
+
+        $support = LKBA_Events_Settings::get_support_email();
+        ob_start();
+        include LKBA_EVENTS_PLUGIN_DIR . 'public/partials/payment-success.php';
+        return (string) ob_get_clean();
+    }
+
+    /**
+     * Comgate cancel / fail return page.
+     *
+     * @param array|string $atts
+     * @return string
+     */
+    public function render_payment_failed($atts = array()) {
+        $ref = isset($_GET['ref']) ? sanitize_text_field(wp_unslash($_GET['ref'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        if ($ref === '' && isset($_GET['refId'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+            $ref = sanitize_text_field(wp_unslash($_GET['refId']));
+        }
+
+        $booking = $ref !== '' ? LKBA_Events_Bookings::get_by_number($ref) : null;
+        if ($booking && $booking->payment_status === 'awaiting' && class_exists('LKBA_Payments_Comgate')) {
+            $context = LKBA_Events_Bookings::to_payment_context($booking);
+            LKBA_Payments_Comgate::for_company((string) $booking->company_id)
+                ->complete_from_return($context, (string) $booking->transaction_id);
+            $booking = LKBA_Events_Bookings::get((int) $booking->id);
+        }
+
+        $support = LKBA_Events_Settings::get_support_email();
+        ob_start();
+        include LKBA_EVENTS_PLUGIN_DIR . 'public/partials/payment-failed.php';
         return (string) ob_get_clean();
     }
 
@@ -124,36 +191,21 @@ class LKBA_Events_Shortcodes {
         $support = LKBA_Events_Settings::get_support_email();
 
         if (!is_user_logged_in()) {
-            return '<div class="lkba-events"><p>' . esc_html__('Pro přehled rezervací se přihlaste. Účet vznikne po zaplacení rezervace.', 'lkba-events') . '</p>'
-                . '<p><a href="mailto:' . esc_attr($support) . '">' . esc_html($support) . '</a></p></div>';
+            return '<div class="lkba-events lkba-my-bookings"><p>'
+                . esc_html__('Pro přehled rezervací se přihlaste. Účet vznikne po zaplacení rezervace.', 'lkba-events')
+                . '</p><p><a href="' . esc_url(wp_login_url(get_permalink())) . '">'
+                . esc_html__('Přihlásit se', 'lkba-events') . '</a></p>'
+                . '<p>' . esc_html__('Podpora:', 'lkba-events')
+                . ' <a href="mailto:' . esc_attr($support) . '">' . esc_html($support) . '</a></p></div>';
         }
 
-        $rows = LKBA_Events_Bookings::query(array(
-            'limit' => 50,
+        $mine = LKBA_Events_Bookings::query(array(
+            'user_id' => get_current_user_id(),
+            'limit'   => 100,
         ));
-        $uid = get_current_user_id();
-        $mine = array_filter($rows, function ($b) use ($uid) {
-            return (int) $b->user_id === $uid;
-        });
 
         ob_start();
-        echo '<div class="lkba-events lkba-my-bookings">';
-        echo '<h2>' . esc_html__('Moje rezervace', 'lkba-events') . '</h2>';
-        if (!$mine) {
-            echo '<p>' . esc_html__('Zatím nemáte žádné rezervace.', 'lkba-events') . '</p>';
-        } else {
-            echo '<ul>';
-            foreach ($mine as $b) {
-                $event = get_post((int) $b->event_id);
-                $title = $event ? $event->post_title : $b->booking_number;
-                echo '<li><strong>' . esc_html($b->booking_number) . '</strong> — ' . esc_html($title)
-                    . ' (' . esc_html($b->status) . ' / ' . esc_html($b->payment_status) . ')</li>';
-            }
-            echo '</ul>';
-        }
-        echo '<p>' . esc_html__('Zrušení nebo změna termínu:', 'lkba-events')
-            . ' <a href="mailto:' . esc_attr($support) . '">' . esc_html($support) . '</a></p>';
-        echo '</div>';
+        include LKBA_EVENTS_PLUGIN_DIR . 'public/partials/my-bookings.php';
         return (string) ob_get_clean();
     }
 
@@ -169,6 +221,7 @@ class LKBA_Events_Shortcodes {
             'payments'        => __('Platební modul není dostupný.', 'lkba-events'),
             'full'            => __('Událost je plná.', 'lkba-events'),
             'fakturoid'       => __('Rezervace vznikla, ale proforma se nepodařila vytvořit. Napište na podporu.', 'lkba-events'),
+            'comgate'         => __('Rezervace vznikla, ale přesměrování na platební bránu selhalo. Napište na podporu nebo zkuste bankovní převod.', 'lkba-events'),
         );
         return $map[$code] ?? __('Rezervaci se nepodařilo odeslat.', 'lkba-events');
     }

@@ -3,7 +3,7 @@
  * Plugin Name: LKBA Events
  * Plugin URI: https://github.com/kubasanitrak/lkba-events
  * Description: Teacher trainings and event bookings for Lenka Krejčová Barre Academy. Requires LKBA Payments.
- * Version: 0.2.0
+ * Version: 0.3.0
  * Author: kubasanitrak
  * Author URI: https://github.com/kubasanitrak
  * License: GPL-2.0+
@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('LKBA_EVENTS_VERSION', '0.2.0');
+define('LKBA_EVENTS_VERSION', '0.3.0');
 define('LKBA_EVENTS_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('LKBA_EVENTS_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('LKBA_EVENTS_PLUGIN_BASENAME', plugin_basename(__FILE__));
