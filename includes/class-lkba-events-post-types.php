@@ -59,7 +59,9 @@ class LKBA_Events_Post_Types {
             'public'            => true,
             'hierarchical'      => true,
             'show_ui'           => true,
-            'show_in_menu'      => true,
+            // Nested CPT parent is a custom slug — WP will not attach tax menus there.
+            // Explicit add_submenu_page in LKBA_Events_Admin instead.
+            'show_in_menu'      => false,
             'show_admin_column' => true,
             'show_in_rest'      => true,
             'rewrite'           => array('slug' => 'kategorie-udalosti'),
@@ -74,7 +76,7 @@ class LKBA_Events_Post_Types {
             'public'            => true,
             'hierarchical'      => false,
             'show_ui'           => true,
-            'show_in_menu'      => true,
+            'show_in_menu'      => false,
             'show_admin_column' => true,
             'show_in_rest'      => true,
             'rewrite'           => array('slug' => 'misto-udalosti'),

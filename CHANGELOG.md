@@ -1,10 +1,16 @@
 # Changelog
 
+## [0.3.2] — 2026-10-29
+
+### Fixed
+
+- Restore **Kategorie** / **Místa** under LKBA Události via explicit `edit-tags.php` submenus (taxonomies do not attach to a custom CPT parent slug). CPT still listed once.
+
 ## [0.3.1] — 2026-10-29
 
 ### Fixed
 
-- Duplicate admin submenu “Události” (manual `add_submenu_page` + CPT `show_in_menu`). CPT/taxonomies now register once under LKBA Události.
+- Duplicate admin submenu “Události” (manual `add_submenu_page` + CPT `show_in_menu`). CPT registers once under LKBA Události.
 
 ### Added
 

@@ -13,6 +13,8 @@ class LKBA_Events_Admin {
 
     public function __construct() {
         add_action('admin_menu', array($this, 'register_menu'), 5);
+        // After CPT submenus (_add_post_type_submenus @ 10): tax + tool links.
+        add_action('admin_menu', array($this, 'register_secondary_submenus'), 11);
         add_action('admin_init', array($this, 'handle_save_settings'));
         add_action('admin_init', array($this, 'handle_attendee_email'));
         add_action('admin_init', array($this, 'handle_migrate'));
@@ -36,9 +38,29 @@ class LKBA_Events_Admin {
             26
         );
 
-        // CPT (show_in_menu=lkba-events) + taxonomies register their own submenus once.
-        // Do not add_submenu_page for edit.php?post_type=… — that duplicated "Události".
+        // CPT lists itself once via show_in_menu=lkba-events (do not also link edit.php?post_type=).
         add_submenu_page(self::MENU_SLUG, __('Přehled', 'lkba-events'), __('Přehled', 'lkba-events'), 'edit_posts', self::MENU_SLUG, array($this, 'render_dashboard'));
+    }
+
+    /**
+     * Order: Přehled → CPT (Všechny události / Přidat) → Kategorie → Místa → Rezervace → Migrace → Nastavení.
+     */
+    public function register_secondary_submenus() {
+        // Taxonomies need explicit submenus — WP attaches them under edit.php?post_type=…, not custom parents.
+        add_submenu_page(
+            self::MENU_SLUG,
+            __('Kategorie', 'lkba-events'),
+            __('Kategorie', 'lkba-events'),
+            'manage_categories',
+            'edit-tags.php?taxonomy=' . LKBA_Events_Post_Types::TAX_CATEGORY . '&post_type=' . LKBA_Events_Post_Types::POST_TYPE_EVENT
+        );
+        add_submenu_page(
+            self::MENU_SLUG,
+            __('Místa', 'lkba-events'),
+            __('Místa', 'lkba-events'),
+            'manage_categories',
+            'edit-tags.php?taxonomy=' . LKBA_Events_Post_Types::TAX_PLACE . '&post_type=' . LKBA_Events_Post_Types::POST_TYPE_EVENT
+        );
         add_submenu_page(self::MENU_SLUG, __('Rezervace', 'lkba-events'), __('Rezervace', 'lkba-events'), 'edit_posts', 'lkba-events-bookings', array($this, 'render_bookings'));
         add_submenu_page(self::MENU_SLUG, __('Migrace', 'lkba-events'), __('Migrace', 'lkba-events'), 'manage_options', 'lkba-events-migrate', array($this, 'render_migrate'));
         add_submenu_page(self::MENU_SLUG, __('Nastavení', 'lkba-events'), __('Nastavení', 'lkba-events'), 'manage_options', 'lkba-events-settings', array($this, 'render_settings'));
