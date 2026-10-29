@@ -1,6 +1,6 @@
 <?php
 /**
- * Front assets (Phase 0 stub).
+ * Front assets.
  */
 
 if (!defined('ABSPATH')) {
@@ -14,6 +14,12 @@ class LKBA_Events_Public {
     }
 
     public function enqueue_assets() {
-        // Phase 2+: scoped CSS/JS for booking forms.
+        wp_register_style(
+            'lkba-events',
+            LKBA_EVENTS_PLUGIN_URL . 'public/css/lkba-events.css',
+            array(),
+            LKBA_EVENTS_VERSION
+        );
+        wp_enqueue_style('lkba-events');
     }
 }

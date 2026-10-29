@@ -1,6 +1,6 @@
 <?php
 /**
- * Events settings stub (legal pickers, support, 12h close).
+ * Events settings.
  */
 
 if (!defined('ABSPATH')) {
@@ -10,32 +10,33 @@ if (!defined('ABSPATH')) {
 settings_errors('lkba_events');
 
 $close_hours   = LKBA_Events_Settings::get_booking_close_hours();
-$support_email = get_option(LKBA_Events_Settings::OPTION_SUPPORT_EMAIL, '');
+$support_email = LKBA_Events_Settings::get_support_email();
 $sender_name   = get_option(LKBA_Events_Settings::OPTION_SENDER_NAME, '');
-$sender_email  = get_option(LKBA_Events_Settings::OPTION_SENDER_EMAIL, '');
+$sender_email  = LKBA_Events_Settings::get_sender_email();
 $terms_page    = (int) get_option(LKBA_Events_Settings::OPTION_TERMS_PAGE, 0);
 $privacy_page  = (int) get_option(LKBA_Events_Settings::OPTION_PRIVACY_PAGE, 0);
 $storno_page   = (int) get_option(LKBA_Events_Settings::OPTION_STORNO_PAGE, 0);
 ?>
 <div class="wrap">
     <h1><?php echo esc_html__('Nastavení událostí', 'lkba-events'); ?></h1>
-    <p><?php echo esc_html__('Phase 0 settings stubs. Guest checkout; WP account after paid (decision §3).', 'lkba-events'); ?></p>
+    <p><?php echo esc_html__('Phase 2 — bank-first booking. Guest checkout; WP účet po zaplacení.', 'lkba-events'); ?></p>
 
     <form method="post" action="">
         <?php wp_nonce_field('lkba_events_save_settings', 'lkba_events_settings_nonce'); ?>
 
         <table class="form-table" role="presentation">
             <tr>
-                <th scope="row"><label for="lkba_booking_close_hours"><?php echo esc_html__('Booking close (hours before start)', 'lkba-events'); ?></label></th>
+                <th scope="row"><label for="lkba_booking_close_hours"><?php echo esc_html__('Uzavření rezervací (hodiny před začátkem)', 'lkba-events'); ?></label></th>
                 <td>
                     <input type="number" min="1" class="small-text" id="lkba_booking_close_hours" name="lkba_booking_close_hours" value="<?php echo esc_attr((string) $close_hours); ?>">
-                    <p class="description"><?php echo esc_html__('Global default is 12 hours.', 'lkba-events'); ?></p>
+                    <p class="description"><?php echo esc_html__('Výchozí 12 hodin.', 'lkba-events'); ?></p>
                 </td>
             </tr>
             <tr>
                 <th scope="row"><label for="lkba_support_email"><?php echo esc_html__('Support e-mail', 'lkba-events'); ?></label></th>
                 <td>
-                    <input type="email" class="regular-text" id="lkba_support_email" name="lkba_support_email" value="<?php echo esc_attr($support_email); ?>" placeholder="<?php echo esc_attr__('TBD', 'lkba-events'); ?>">
+                    <input type="email" class="regular-text" id="lkba_support_email" name="lkba_support_email" value="<?php echo esc_attr($support_email); ?>">
+                    <p class="description"><?php echo esc_html__('From + cancel/reschedule mailto. Default: rezervace@barreacademy.cz', 'lkba-events'); ?></p>
                 </td>
             </tr>
             <tr>
@@ -65,7 +66,7 @@ $storno_page   = (int) get_option(LKBA_Events_Settings::OPTION_STORNO_PAGE, 0);
                 )); ?></td>
             </tr>
             <tr>
-                <th scope="row"><?php echo esc_html__('Storno / cancellation page', 'lkba-events'); ?></th>
+                <th scope="row"><?php echo esc_html__('Storno page', 'lkba-events'); ?></th>
                 <td>
                     <?php wp_dropdown_pages(array(
                         'name'              => 'lkba_storno_page',
@@ -73,7 +74,7 @@ $storno_page   = (int) get_option(LKBA_Events_Settings::OPTION_STORNO_PAGE, 0);
                         'show_option_none'  => __('— Select —', 'lkba-events'),
                         'option_none_value' => '0',
                     )); ?>
-                    <p class="description"><?php echo esc_html__('Example live URL: https://barreacademy.cz/podminky-storna-teacher-training/', 'lkba-events'); ?></p>
+                    <p class="description">https://barreacademy.cz/podminky-storna-teacher-training/</p>
                 </td>
             </tr>
         </table>

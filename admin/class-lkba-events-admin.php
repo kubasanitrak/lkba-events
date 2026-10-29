@@ -1,6 +1,6 @@
 <?php
 /**
- * Admin menu and settings stub.
+ * Admin menu, event meta boxes, bookings list, settings.
  */
 
 if (!defined('ABSPATH')) {
@@ -14,7 +14,14 @@ class LKBA_Events_Admin {
     public function __construct() {
         add_action('admin_menu', array($this, 'register_menu'), 5);
         add_filter('register_post_type_args', array($this, 'attach_cpt_to_menu'), 10, 2);
-        add_action('admin_init', array($this, 'handle_save'));
+        add_action('admin_init', array($this, 'handle_save_settings'));
+        add_action('add_meta_boxes', array($this, 'add_meta_boxes'));
+        add_action('save_post_' . LKBA_Events_Post_Types::POST_TYPE_EVENT, array($this, 'save_event_meta'), 10, 2);
+        add_action(LKBA_Events_Post_Types::TAX_CATEGORY . '_add_form_fields', array($this, 'category_add_field'));
+        add_action(LKBA_Events_Post_Types::TAX_CATEGORY . '_edit_form_fields', array($this, 'category_edit_field'));
+        add_action('created_' . LKBA_Events_Post_Types::TAX_CATEGORY, array($this, 'save_category_meta'));
+        add_action('edited_' . LKBA_Events_Post_Types::TAX_CATEGORY, array($this, 'save_category_meta'));
+        add_action('admin_init', array($this, 'handle_booking_actions'));
     }
 
     public function attach_cpt_to_menu($args, $post_type) {
@@ -35,69 +42,149 @@ class LKBA_Events_Admin {
             26
         );
 
-        add_submenu_page(
-            self::MENU_SLUG,
-            __('Přehled', 'lkba-events'),
-            __('Přehled', 'lkba-events'),
-            'edit_posts',
-            self::MENU_SLUG,
-            array($this, 'render_dashboard')
-        );
-
-        add_submenu_page(
-            self::MENU_SLUG,
-            __('Události', 'lkba-events'),
-            __('Události', 'lkba-events'),
-            'edit_posts',
-            'edit.php?post_type=' . LKBA_Events_Post_Types::POST_TYPE_EVENT
-        );
-
-        add_submenu_page(
-            self::MENU_SLUG,
-            __('Kategorie', 'lkba-events'),
-            __('Kategorie', 'lkba-events'),
-            'manage_categories',
-            'edit-tags.php?taxonomy=' . LKBA_Events_Post_Types::TAX_CATEGORY . '&post_type=' . LKBA_Events_Post_Types::POST_TYPE_EVENT
-        );
-
-        add_submenu_page(
-            self::MENU_SLUG,
-            __('Místa', 'lkba-events'),
-            __('Místa', 'lkba-events'),
-            'manage_categories',
-            'edit-tags.php?taxonomy=' . LKBA_Events_Post_Types::TAX_PLACE . '&post_type=' . LKBA_Events_Post_Types::POST_TYPE_EVENT
-        );
-
-        add_submenu_page(
-            self::MENU_SLUG,
-            __('Rezervace', 'lkba-events'),
-            __('Rezervace', 'lkba-events'),
-            'edit_posts',
-            'lkba-events-bookings',
-            array($this, 'render_bookings_stub')
-        );
-
-        add_submenu_page(
-            self::MENU_SLUG,
-            __('Nastavení', 'lkba-events'),
-            __('Nastavení', 'lkba-events'),
-            'manage_options',
-            'lkba-events-settings',
-            array($this, 'render_settings')
-        );
+        add_submenu_page(self::MENU_SLUG, __('Přehled', 'lkba-events'), __('Přehled', 'lkba-events'), 'edit_posts', self::MENU_SLUG, array($this, 'render_dashboard'));
+        add_submenu_page(self::MENU_SLUG, __('Události', 'lkba-events'), __('Události', 'lkba-events'), 'edit_posts', 'edit.php?post_type=' . LKBA_Events_Post_Types::POST_TYPE_EVENT);
+        add_submenu_page(self::MENU_SLUG, __('Kategorie', 'lkba-events'), __('Kategorie', 'lkba-events'), 'manage_categories', 'edit-tags.php?taxonomy=' . LKBA_Events_Post_Types::TAX_CATEGORY . '&post_type=' . LKBA_Events_Post_Types::POST_TYPE_EVENT);
+        add_submenu_page(self::MENU_SLUG, __('Místa', 'lkba-events'), __('Místa', 'lkba-events'), 'manage_categories', 'edit-tags.php?taxonomy=' . LKBA_Events_Post_Types::TAX_PLACE . '&post_type=' . LKBA_Events_Post_Types::POST_TYPE_EVENT);
+        add_submenu_page(self::MENU_SLUG, __('Rezervace', 'lkba-events'), __('Rezervace', 'lkba-events'), 'edit_posts', 'lkba-events-bookings', array($this, 'render_bookings'));
+        add_submenu_page(self::MENU_SLUG, __('Nastavení', 'lkba-events'), __('Nastavení', 'lkba-events'), 'manage_options', 'lkba-events-settings', array($this, 'render_settings'));
     }
 
     public function render_dashboard() {
+        $open = 0;
+        foreach (LKBA_Events_Event::get_open_and_past()['open'] as $p) {
+            if (LKBA_Events_Event::get_booking_status($p->ID) === 'open') {
+                $open++;
+            }
+        }
+        $bookings = LKBA_Events_Bookings::query(array('limit' => 5));
         echo '<div class="wrap"><h1>' . esc_html__('LKBA Události', 'lkba-events') . '</h1>';
-        echo '<p>' . esc_html__('Phase 0 scaffold — stats and booking tools arrive in later phases.', 'lkba-events') . '</p></div>';
+        echo '<p>' . esc_html(sprintf(__('Otevřené termíny: %d', 'lkba-events'), $open)) . '</p>';
+        echo '<p><a class="button button-primary" href="' . esc_url(admin_url('admin.php?page=lkba-events-bookings')) . '">' . esc_html__('Rezervace', 'lkba-events') . '</a></p>';
+        if ($bookings) {
+            echo '<h2>' . esc_html__('Poslední rezervace', 'lkba-events') . '</h2><ul>';
+            foreach ($bookings as $b) {
+                echo '<li>' . esc_html($b->booking_number . ' — ' . $b->status . '/' . $b->payment_status) . '</li>';
+            }
+            echo '</ul>';
+        }
+        echo '</div>';
     }
 
-    public function render_bookings_stub() {
-        echo '<div class="wrap"><h1>' . esc_html__('Rezervace', 'lkba-events') . '</h1>';
-        echo '<p>' . esc_html__('Bookings list stub. Table prefix: lkba_bookings.', 'lkba-events') . '</p></div>';
+    public function add_meta_boxes() {
+        add_meta_box(
+            'lkba_event_details',
+            __('Detaily události', 'lkba-events'),
+            array($this, 'render_event_metabox'),
+            LKBA_Events_Post_Types::POST_TYPE_EVENT,
+            'normal',
+            'high'
+        );
     }
 
-    public function handle_save() {
+    public function render_event_metabox($post) {
+        wp_nonce_field('lkba_event_meta', 'lkba_event_meta_nonce');
+        $meta = LKBA_Events_Event::get_meta($post->ID);
+        $companies = class_exists('LKBA_Payments_Companies') ? LKBA_Payments_Companies::get_choices() : array();
+        $status = LKBA_Events_Event::get_booking_status($post->ID);
+        include LKBA_EVENTS_PLUGIN_DIR . 'admin/partials/event-metabox.php';
+    }
+
+    public function save_event_meta($post_id, $post) {
+        if (!isset($_POST['lkba_event_meta_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['lkba_event_meta_nonce'])), 'lkba_event_meta')) {
+            return;
+        }
+        if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+            return;
+        }
+        if (!current_user_can('edit_post', $post_id)) {
+            return;
+        }
+
+        $start = isset($_POST['lkba_datetime_start']) ? sanitize_text_field(wp_unslash($_POST['lkba_datetime_start'])) : '';
+        $end   = isset($_POST['lkba_datetime_end']) ? sanitize_text_field(wp_unslash($_POST['lkba_datetime_end'])) : '';
+        // Convert datetime-local to MySQL-ish.
+        $start = $start !== '' ? str_replace('T', ' ', $start) . (strlen($start) === 16 ? ':00' : '') : '';
+        $end   = $end !== '' ? str_replace('T', ' ', $end) . (strlen($end) === 16 ? ':00' : '') : '';
+
+        LKBA_Events_Event::save_meta($post_id, array(
+            'datetime_start'  => $start,
+            'datetime_end'    => $end,
+            'place_name'      => isset($_POST['lkba_place_name']) ? sanitize_text_field(wp_unslash($_POST['lkba_place_name'])) : '',
+            'place_address'   => isset($_POST['lkba_place_address']) ? sanitize_text_field(wp_unslash($_POST['lkba_place_address'])) : '',
+            'instructor'      => isset($_POST['lkba_instructor']) ? sanitize_text_field(wp_unslash($_POST['lkba_instructor'])) : '',
+            'capacity'        => isset($_POST['lkba_capacity']) ? absint($_POST['lkba_capacity']) : 0,
+            'price'           => isset($_POST['lkba_price']) ? wp_unslash($_POST['lkba_price']) : '',
+            'company_id'      => isset($_POST['lkba_company_id']) ? sanitize_text_field(wp_unslash($_POST['lkba_company_id'])) : 'company-1',
+            'payment_methods' => isset($_POST['lkba_payment_methods']) ? sanitize_key(wp_unslash($_POST['lkba_payment_methods'])) : 'bank_transfer',
+            'booking_open'    => !empty($_POST['lkba_booking_open']) ? 1 : 0,
+        ));
+    }
+
+    public function category_add_field() {
+        echo '<div class="form-field"><label for="lkba_default_price">' . esc_html__('Výchozí cena (Kč, vč. DPH)', 'lkba-events') . '</label>';
+        echo '<input type="number" step="0.01" name="lkba_default_price" id="lkba_default_price" value=""></div>';
+    }
+
+    public function category_edit_field($term) {
+        $price = get_term_meta($term->term_id, LKBA_Events_Event::TERM_META_PRICE, true);
+        echo '<tr class="form-field"><th><label for="lkba_default_price">' . esc_html__('Výchozí cena (Kč)', 'lkba-events') . '</label></th>';
+        echo '<td><input type="number" step="0.01" name="lkba_default_price" id="lkba_default_price" value="' . esc_attr((string) $price) . '"></td></tr>';
+    }
+
+    public function save_category_meta($term_id) {
+        if (isset($_POST['lkba_default_price'])) {
+            $price = wp_unslash($_POST['lkba_default_price']);
+            update_term_meta($term_id, LKBA_Events_Event::TERM_META_PRICE, $price === '' ? '' : (string) (float) $price);
+        }
+    }
+
+    public function handle_booking_actions() {
+        if (!isset($_GET['lkba_booking_action'], $_GET['booking_id'], $_GET['_wpnonce'])) {
+            return;
+        }
+        if (!current_user_can('edit_posts')) {
+            return;
+        }
+        $id = absint($_GET['booking_id']);
+        if (!wp_verify_nonce(sanitize_text_field(wp_unslash($_GET['_wpnonce'])), 'lkba_booking_' . $id)) {
+            return;
+        }
+        $action = sanitize_key(wp_unslash($_GET['lkba_booking_action']));
+        if ($action === 'confirm') {
+            LKBA_Events_Bookings::update($id, array(
+                'status'         => 'confirmed',
+                'payment_status' => 'paid',
+                'paid_at'        => current_time('mysql'),
+            ));
+            $b = LKBA_Events_Bookings::get($id);
+            if ($b) {
+                LKBA_Events_Emails::send_paid($b);
+            }
+        } elseif ($action === 'cancel') {
+            LKBA_Events_Bookings::update($id, array(
+                'status'         => 'cancelled',
+                'payment_status' => 'failed',
+            ));
+        }
+        wp_safe_redirect(admin_url('admin.php?page=lkba-events-bookings'));
+        exit;
+    }
+
+    public function render_bookings() {
+        if (!current_user_can('edit_posts')) {
+            return;
+        }
+        $status = isset($_GET['status']) ? sanitize_key(wp_unslash($_GET['status'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $args   = array('limit' => 200);
+        if ($status !== '') {
+            $args['status'] = $status;
+        }
+        $bookings = LKBA_Events_Bookings::query($args);
+        include LKBA_EVENTS_PLUGIN_DIR . 'admin/partials/bookings-page.php';
+    }
+
+    public function handle_save_settings() {
         if (!isset($_POST['lkba_events_settings_nonce'])) {
             return;
         }
@@ -116,7 +203,7 @@ class LKBA_Events_Admin {
         update_option(LKBA_Events_Settings::OPTION_BOOKING_CLOSE_HOURS, $hours);
         update_option(
             LKBA_Events_Settings::OPTION_SUPPORT_EMAIL,
-            isset($_POST['lkba_support_email']) ? sanitize_email(wp_unslash($_POST['lkba_support_email'])) : ''
+            isset($_POST['lkba_support_email']) ? sanitize_email(wp_unslash($_POST['lkba_support_email'])) : LKBA_Events_Settings::DEFAULT_SUPPORT_EMAIL
         );
         update_option(
             LKBA_Events_Settings::OPTION_SENDER_NAME,
@@ -124,20 +211,11 @@ class LKBA_Events_Admin {
         );
         update_option(
             LKBA_Events_Settings::OPTION_SENDER_EMAIL,
-            isset($_POST['lkba_sender_email']) ? sanitize_email(wp_unslash($_POST['lkba_sender_email'])) : ''
+            isset($_POST['lkba_sender_email']) ? sanitize_email(wp_unslash($_POST['lkba_sender_email'])) : LKBA_Events_Settings::DEFAULT_SUPPORT_EMAIL
         );
-        update_option(
-            LKBA_Events_Settings::OPTION_TERMS_PAGE,
-            isset($_POST['lkba_terms_page']) ? absint($_POST['lkba_terms_page']) : 0
-        );
-        update_option(
-            LKBA_Events_Settings::OPTION_PRIVACY_PAGE,
-            isset($_POST['lkba_privacy_page']) ? absint($_POST['lkba_privacy_page']) : 0
-        );
-        update_option(
-            LKBA_Events_Settings::OPTION_STORNO_PAGE,
-            isset($_POST['lkba_storno_page']) ? absint($_POST['lkba_storno_page']) : 0
-        );
+        update_option(LKBA_Events_Settings::OPTION_TERMS_PAGE, isset($_POST['lkba_terms_page']) ? absint($_POST['lkba_terms_page']) : 0);
+        update_option(LKBA_Events_Settings::OPTION_PRIVACY_PAGE, isset($_POST['lkba_privacy_page']) ? absint($_POST['lkba_privacy_page']) : 0);
+        update_option(LKBA_Events_Settings::OPTION_STORNO_PAGE, isset($_POST['lkba_storno_page']) ? absint($_POST['lkba_storno_page']) : 0);
 
         add_settings_error('lkba_events', 'saved', __('Nastavení uloženo.', 'lkba-events'), 'updated');
     }
