@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.3.1] — 2026-10-29
+
+### Fixed
+
+- Duplicate admin submenu “Události” (manual `add_submenu_page` + CPT `show_in_menu`). CPT/taxonomies now register once under LKBA Události.
+
+### Added
+
+- Admin **Migrace**: import workshop catalog from `includes/config.php`, non-voucher `lkba_goods` + `lk_barre` registrations into events/bookings (holding events when occurrence id missing).
+
 ## [0.3.0] — 2026-10-29
 
 ### Added

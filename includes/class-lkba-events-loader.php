@@ -24,6 +24,7 @@ class LKBA_Events_Loader {
         require_once LKBA_EVENTS_PLUGIN_DIR . 'includes/class-lkba-events-emails.php';
         require_once LKBA_EVENTS_PLUGIN_DIR . 'includes/class-lkba-events-payments.php';
         require_once LKBA_EVENTS_PLUGIN_DIR . 'includes/class-lkba-events-checkout.php';
+        require_once LKBA_EVENTS_PLUGIN_DIR . 'includes/class-lkba-events-migrate.php';
         require_once LKBA_EVENTS_PLUGIN_DIR . 'includes/class-lkba-events-shortcodes.php';
 
         if (is_admin()) {

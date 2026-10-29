@@ -22,6 +22,8 @@ class LKBA_Events_Post_Types {
         $labels = array(
             'name'          => __('Události', 'lkba-events'),
             'singular_name' => __('Událost', 'lkba-events'),
+            'all_items'     => __('Všechny události', 'lkba-events'),
+            'add_new'       => __('Přidat', 'lkba-events'),
             'add_new_item'  => __('Přidat událost', 'lkba-events'),
             'edit_item'     => __('Upravit událost', 'lkba-events'),
             'menu_name'     => __('Události', 'lkba-events'),
@@ -32,7 +34,8 @@ class LKBA_Events_Post_Types {
             'public'              => true,
             'publicly_queryable'  => true,
             'show_ui'             => true,
-            'show_in_menu'        => false,
+            // Nested under LKBA_Events_Admin::MENU_SLUG — do not also add_submenu_page for edit.php.
+            'show_in_menu'        => 'lkba-events',
             'show_in_rest'        => true,
             'query_var'           => true,
             'rewrite'             => array(
@@ -51,10 +54,12 @@ class LKBA_Events_Post_Types {
             'labels' => array(
                 'name'          => __('Kategorie událostí', 'lkba-events'),
                 'singular_name' => __('Kategorie', 'lkba-events'),
+                'menu_name'     => __('Kategorie', 'lkba-events'),
             ),
             'public'            => true,
             'hierarchical'      => true,
             'show_ui'           => true,
+            'show_in_menu'      => true,
             'show_admin_column' => true,
             'show_in_rest'      => true,
             'rewrite'           => array('slug' => 'kategorie-udalosti'),
@@ -64,10 +69,12 @@ class LKBA_Events_Post_Types {
             'labels' => array(
                 'name'          => __('Místa', 'lkba-events'),
                 'singular_name' => __('Místo', 'lkba-events'),
+                'menu_name'     => __('Místa', 'lkba-events'),
             ),
             'public'            => true,
             'hierarchical'      => false,
             'show_ui'           => true,
+            'show_in_menu'      => true,
             'show_admin_column' => true,
             'show_in_rest'      => true,
             'rewrite'           => array('slug' => 'misto-udalosti'),

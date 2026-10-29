@@ -13,9 +13,9 @@ class LKBA_Events_Admin {
 
     public function __construct() {
         add_action('admin_menu', array($this, 'register_menu'), 5);
-        add_filter('register_post_type_args', array($this, 'attach_cpt_to_menu'), 10, 2);
         add_action('admin_init', array($this, 'handle_save_settings'));
         add_action('admin_init', array($this, 'handle_attendee_email'));
+        add_action('admin_init', array($this, 'handle_migrate'));
         add_action('add_meta_boxes', array($this, 'add_meta_boxes'));
         add_action('save_post_' . LKBA_Events_Post_Types::POST_TYPE_EVENT, array($this, 'save_event_meta'), 10, 2);
         add_action(LKBA_Events_Post_Types::TAX_CATEGORY . '_add_form_fields', array($this, 'category_add_field'));
@@ -23,13 +23,6 @@ class LKBA_Events_Admin {
         add_action('created_' . LKBA_Events_Post_Types::TAX_CATEGORY, array($this, 'save_category_meta'));
         add_action('edited_' . LKBA_Events_Post_Types::TAX_CATEGORY, array($this, 'save_category_meta'));
         add_action('admin_init', array($this, 'handle_booking_actions'));
-    }
-
-    public function attach_cpt_to_menu($args, $post_type) {
-        if ($post_type === LKBA_Events_Post_Types::POST_TYPE_EVENT) {
-            $args['show_in_menu'] = self::MENU_SLUG;
-        }
-        return $args;
     }
 
     public function register_menu() {
@@ -43,11 +36,11 @@ class LKBA_Events_Admin {
             26
         );
 
+        // CPT (show_in_menu=lkba-events) + taxonomies register their own submenus once.
+        // Do not add_submenu_page for edit.php?post_type=… — that duplicated "Události".
         add_submenu_page(self::MENU_SLUG, __('Přehled', 'lkba-events'), __('Přehled', 'lkba-events'), 'edit_posts', self::MENU_SLUG, array($this, 'render_dashboard'));
-        add_submenu_page(self::MENU_SLUG, __('Události', 'lkba-events'), __('Události', 'lkba-events'), 'edit_posts', 'edit.php?post_type=' . LKBA_Events_Post_Types::POST_TYPE_EVENT);
-        add_submenu_page(self::MENU_SLUG, __('Kategorie', 'lkba-events'), __('Kategorie', 'lkba-events'), 'manage_categories', 'edit-tags.php?taxonomy=' . LKBA_Events_Post_Types::TAX_CATEGORY . '&post_type=' . LKBA_Events_Post_Types::POST_TYPE_EVENT);
-        add_submenu_page(self::MENU_SLUG, __('Místa', 'lkba-events'), __('Místa', 'lkba-events'), 'manage_categories', 'edit-tags.php?taxonomy=' . LKBA_Events_Post_Types::TAX_PLACE . '&post_type=' . LKBA_Events_Post_Types::POST_TYPE_EVENT);
         add_submenu_page(self::MENU_SLUG, __('Rezervace', 'lkba-events'), __('Rezervace', 'lkba-events'), 'edit_posts', 'lkba-events-bookings', array($this, 'render_bookings'));
+        add_submenu_page(self::MENU_SLUG, __('Migrace', 'lkba-events'), __('Migrace', 'lkba-events'), 'manage_options', 'lkba-events-migrate', array($this, 'render_migrate'));
         add_submenu_page(self::MENU_SLUG, __('Nastavení', 'lkba-events'), __('Nastavení', 'lkba-events'), 'manage_options', 'lkba-events-settings', array($this, 'render_settings'));
     }
 
@@ -274,5 +267,58 @@ class LKBA_Events_Admin {
             return;
         }
         include LKBA_EVENTS_PLUGIN_DIR . 'admin/partials/settings-page.php';
+    }
+
+    public function handle_migrate() {
+        if (!isset($_POST['lkba_events_migrate_nonce'])) {
+            return;
+        }
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+        if (!wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['lkba_events_migrate_nonce'])), 'lkba_events_migrate')) {
+            return;
+        }
+
+        $action = isset($_POST['lkba_migrate_action']) ? sanitize_key(wp_unslash($_POST['lkba_migrate_action'])) : 'all';
+        if ($action === 'categories') {
+            $result = array('message' => '', 'categories' => LKBA_Events_Migrate::ensure_categories());
+            $result['message'] = sprintf(
+                __('Kategorie: vytvořeno %1$d, již existovalo %2$d.', 'lkba-events'),
+                (int) $result['categories']['created'],
+                (int) $result['categories']['existing']
+            );
+        } elseif ($action === 'workshops') {
+            $ws = LKBA_Events_Migrate::import_workshops();
+            $result = array(
+                'workshops' => $ws,
+                'message'   => sprintf(
+                    __('Workshopy: +%1$d, přeskočeno %2$d, chyby %3$d.', 'lkba-events'),
+                    (int) $ws['imported'],
+                    (int) $ws['skipped'],
+                    (int) $ws['errors']
+                ),
+            );
+        } elseif ($action === 'registrations') {
+            $result = LKBA_Events_Migrate::import_registrations(2000);
+        } else {
+            $result = LKBA_Events_Migrate::run_all();
+        }
+
+        set_transient('lkba_events_migrate_result', $result, 120);
+        wp_safe_redirect(admin_url('admin.php?page=lkba-events-migrate'));
+        exit;
+    }
+
+    public function render_migrate() {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+        $result = get_transient('lkba_events_migrate_result');
+        if ($result) {
+            delete_transient('lkba_events_migrate_result');
+        }
+        $probe = LKBA_Events_Migrate::probe();
+        include LKBA_EVENTS_PLUGIN_DIR . 'admin/partials/migrate-page.php';
     }
 }
