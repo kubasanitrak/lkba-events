@@ -1,63 +1,78 @@
-.lkba-events {
-  --lkba-green: #00573f;
-  --lkba-cream: #eee7d6;
-  color: #1a1a1a;
-  max-width: 960px;
+/**
+ * Fallback / page-inline extras for events shortcodes.
+ * On lkba_theme, workshop/signup look comes from theme style.css.
+ */
+
+.lkba-events .workshop-terms {
+  flex-wrap: wrap;
 }
 
-.lkba-events-grid {
-  display: grid;
-  gap: 1.25rem;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+.lkba-events .workshop-terms--item {
+  flex-basis: calc(100% / 3.5);
 }
 
-.lkba-event-card {
-  border: 1px solid var(--lkba-cream);
-  padding: 1rem;
-  background: #fff;
+.lkba-events .workshop-terms--item_capacity {
+  position: absolute;
+  top: calc(var(--gap, 0.5rem) * 2);
+  text-transform: uppercase;
+  color: var(--LKBA-green, #00573f);
+  left: 50%;
+  transform: translateX(-50%);
 }
 
-.lkba-event-card__cta {
-  display: inline-block;
-  margin-top: 0.5rem;
-  color: #fff;
-  background: var(--lkba-green);
-  padding: 0.5rem 0.9rem;
-  text-decoration: none;
+.lkba-events .pointer-none {
+  pointer-events: none;
 }
 
-.lkba-booking-form__error {
-  background: #fde8e8;
-  border: 1px solid #e11;
-  padding: 0.75rem;
-  margin-bottom: 1rem;
+.lkba-events .location .minor {
+  font-size: calc(11px + (13 - 11) * ((100vw - 320px) / (2560 - 320)));
+  line-height: 1em;
 }
 
-.lkba-booking-form input[type="text"],
-.lkba-booking-form input[type="email"],
-.lkba-booking-form input[type="number"],
-.lkba-booking-form select,
-.lkba-booking-form textarea {
+.lkba-events .location_place::before {
+  content: '';
+  display: inline-flex;
+  width: 1em;
+  height: 1em;
+  margin-right: 0.35em;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' xml:space='preserve' viewBox='0 0 256 256'%3E%3Cpath fill='%2300573F' d='M127.857 1.407c-54.9 0-99.404 44.504-99.404 99.403 0 24.51 8.91 46.908 23.615 64.24l75.789 89.257 75.785-89.26c14.705-17.33 23.616-39.73 23.616-64.24.002-54.896-44.502-99.4-99.401-99.4m0 136.86c-22.579 0-40.88-18.3-40.88-40.88 0-22.578 18.301-40.88 40.88-40.88s40.88 18.302 40.88 40.88c0 22.58-18.302 40.88-40.88 40.88'/%3E%3C/svg%3E") bottom center no-repeat;
+}
+
+.lkba-events .location {
+  color: var(--LKBA-green, #00573f);
+  transition: color 0.2s ease-out 0s;
+  position: absolute;
+  top: calc(var(--pad-T, 1rem) * 0.75);
+  left: 50%;
+  transform: translateX(-50%);
   width: 100%;
-  max-width: 28rem;
 }
 
-.lkba-booking-form__submit {
-  background: var(--lkba-green);
-  color: #fff;
-  border: 0;
-  padding: 0.65rem 1.2rem;
-  cursor: pointer;
+.lkba-events .signup-form .nice-input input:checked ~ .location,
+.lkba-events .workshop-terms--item:hover .location {
+  color: var(--LKBA-cream, #eee7d6);
+}
+
+.lkba-events .signup-form .nice-input input:checked ~ .location .location_place::before,
+.lkba-events .workshop-terms--item_label:hover .location_place::before {
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' xml:space='preserve' viewBox='0 0 256 256'%3E%3Cpath fill='%23EEE7D6' d='M127.857 1.407c-54.9 0-99.404 44.504-99.404 99.403 0 24.51 8.91 46.908 23.615 64.24l75.789 89.257 75.785-89.26c14.705-17.33 23.616-39.73 23.616-64.24.002-54.896-44.502-99.4-99.401-99.4m0 136.86c-22.579 0-40.88-18.3-40.88-40.88 0-22.578 18.301-40.88 40.88-40.88s40.88 18.302 40.88 40.88c0 22.58-18.302 40.88-40.88 40.88'/%3E%3C/svg%3E") bottom center no-repeat;
+}
+
+.lkba-events .rolled-up {
+  height: 0;
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  margin-bottom: -0.75rem !important;
+}
+
+.lkba-events a.lkba-event-card__cta {
+  text-decoration: none;
+  color: inherit;
 }
 
 .lkba-booking-recap__instructions {
   margin: 1rem 0;
-}
-
-.lkba-booking-form__payment {
-  margin: 1rem 0;
-  border: 1px solid var(--lkba-cream);
-  padding: 0.75rem 1rem;
 }
 
 .lkba-my-bookings__list {
@@ -66,16 +81,25 @@
 }
 
 .lkba-my-bookings__item {
-  border-bottom: 1px solid var(--lkba-cream);
+  border-bottom: 1px solid var(--LKBA-cream, #eee7d6);
   padding-bottom: 1rem;
 }
 
 .lkba-my-bookings__actions a,
 .lkba-btn {
-  color: var(--lkba-green);
+  color: var(--LKBA-green, #00573f);
 }
 
 .lkba-payment-return__meta {
   list-style: none;
   padding: 0;
+}
+
+@media screen and (orientation: landscape) {
+  .lkba-events .location {
+    top: calc(var(--pad-T, 1rem) * 0.5);
+  }
+  .lkba-events .workshop-terms--item_label {
+    padding: calc(var(--pad-T, 1rem) * 1.875) calc(var(--pad-R, 1rem) * 0.75) calc(var(--pad-T, 1rem) * 0.5);
+  }
 }

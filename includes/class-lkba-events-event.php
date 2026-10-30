@@ -221,6 +221,39 @@ class LKBA_Events_Event {
     }
 
     /**
+     * Date part for legacy workshop tiles (e.g. "12. 5. 2026").
+     *
+     * @param int $event_id
+     * @return string
+     */
+    public static function format_date($event_id) {
+        $meta = self::get_meta($event_id);
+        if ($meta['datetime_start'] === '') {
+            return '';
+        }
+        return date_i18n('j. n. Y', strtotime($meta['datetime_start']));
+    }
+
+    /**
+     * Hour range for legacy workshop tiles (e.g. "9:00–16:00 hod.").
+     *
+     * @param int $event_id
+     * @return string
+     */
+    public static function format_hours($event_id) {
+        $meta = self::get_meta($event_id);
+        if ($meta['datetime_start'] === '') {
+            return '';
+        }
+        $start = date_i18n('G:i', strtotime($meta['datetime_start']));
+        if ($meta['datetime_end'] !== '') {
+            $end = date_i18n('G:i', strtotime($meta['datetime_end']));
+            return $start . '–' . $end . ' hod.';
+        }
+        return $start . ' hod.';
+    }
+
+    /**
      * Payment methods allowed for this event ∩ company credentials.
      *
      * @param int $event_id

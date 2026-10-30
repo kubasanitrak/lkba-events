@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.4] — 2026-10-30
+
+### Changed
+
+- `[lkba_events_list]` + booking form chrome aligned with legacy `teacher-training-form` (`workshop-terms` tiles, `signup-form` rows). Payment/recap logic unchanged.
+
 ## [0.3.3] — 2026-10-30
 
 ### Added
