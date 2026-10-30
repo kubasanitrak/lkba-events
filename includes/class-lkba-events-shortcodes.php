@@ -158,25 +158,40 @@ class LKBA_Events_Shortcodes {
             $error_msg = self::error_message($code);
         }
 
-        // Optional category filter when no concrete event is selected (shortcode or ?category= / ?cat=).
-        $cat_slug = $atts['category'] !== '' ? $atts['category'] : $atts['cat'];
-        if ($cat_slug === '') {
-            if (isset($_GET['category'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-                $cat_slug = sanitize_title(wp_unslash($_GET['category'])); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-            } elseif (isset($_GET['cat'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-                $cat_slug = sanitize_title(wp_unslash($_GET['cat'])); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        // Category filter for term radios:
+        // - with event_id → same lkba_event_cat as that event
+        // - without → optional shortcode / ?category= / ?cat=
+        $cat_slugs = array();
+        if ($event_id) {
+            $terms = get_the_terms($event_id, LKBA_Events_Post_Types::TAX_CATEGORY);
+            if (is_array($terms)) {
+                foreach ($terms as $term) {
+                    $cat_slugs[] = $term->slug;
+                }
             }
         } else {
-            $cat_slug = sanitize_title($cat_slug);
+            $cat_slug = $atts['category'] !== '' ? $atts['category'] : $atts['cat'];
+            if ($cat_slug === '') {
+                if (isset($_GET['category'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+                    $cat_slug = sanitize_title(wp_unslash($_GET['category'])); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+                } elseif (isset($_GET['cat'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+                    $cat_slug = sanitize_title(wp_unslash($_GET['cat'])); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+                }
+            } else {
+                $cat_slug = sanitize_title($cat_slug);
+            }
+            if ($cat_slug !== '') {
+                $cat_slugs[] = $cat_slug;
+            }
         }
 
         $query_args = array();
-        if ($cat_slug !== '' && !$event_id) {
+        if ($cat_slugs) {
             $query_args['tax_query'] = array(
                 array(
                     'taxonomy' => LKBA_Events_Post_Types::TAX_CATEGORY,
                     'field'    => 'slug',
-                    'terms'    => $cat_slug,
+                    'terms'    => $cat_slugs,
                 ),
             );
         }
@@ -185,6 +200,23 @@ class LKBA_Events_Shortcodes {
         foreach (LKBA_Events_Event::get_open_and_past($query_args)['open'] as $post) {
             if (LKBA_Events_Event::get_booking_status($post->ID) === 'open') {
                 $events_open[] = $post;
+            }
+        }
+
+        // Ensure the requested event stays in the picker even if status edge-case.
+        if ($event_id) {
+            $found = false;
+            foreach ($events_open as $post) {
+                if ((int) $post->ID === $event_id) {
+                    $found = true;
+                    break;
+                }
+            }
+            if (!$found) {
+                $requested = get_post($event_id);
+                if ($requested instanceof WP_Post && $requested->post_type === LKBA_Events_Post_Types::POST_TYPE_EVENT) {
+                    array_unshift($events_open, $requested);
+                }
             }
         }
 

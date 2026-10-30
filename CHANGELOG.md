@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.7] — 2026-10-30
+
+### Fixed
+
+- `[lkba_event_book]` with `?event_id=` filters term radios to that event’s `lkba_event_cat` only (not all open categories).
+
 ## [0.3.6] — 2026-10-30
 
 ### Added
