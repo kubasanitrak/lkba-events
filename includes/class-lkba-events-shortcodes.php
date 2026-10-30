@@ -49,9 +49,23 @@ class LKBA_Events_Shortcodes {
     public function render_list($atts = array()) {
         $atts = shortcode_atts(array(
             'book_page' => '',
+            'category'  => '',
+            'cat'       => '',
         ), $atts, 'lkba_events_list');
 
-        $split = LKBA_Events_Event::get_open_and_past();
+        $query_args = array();
+        $cat_slug   = $atts['category'] !== '' ? $atts['category'] : $atts['cat'];
+        if ($cat_slug !== '') {
+            $query_args['tax_query'] = array(
+                array(
+                    'taxonomy' => LKBA_Events_Post_Types::TAX_CATEGORY,
+                    'field'    => 'slug',
+                    'terms'    => sanitize_title($cat_slug),
+                ),
+            );
+        }
+
+        $split = LKBA_Events_Event::get_open_and_past($query_args);
         $book_page = $atts['book_page'] !== '' ? esc_url($atts['book_page']) : '';
 
         $privacy = (int) get_option(LKBA_Events_Settings::OPTION_PRIVACY_PAGE, 0);

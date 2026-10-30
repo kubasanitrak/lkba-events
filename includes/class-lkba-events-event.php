@@ -170,10 +170,11 @@ class LKBA_Events_Event {
     /**
      * Split into open/upcoming bookable vs past/closed for listing.
      *
+     * @param array<string, mixed> $query_args Extra WP_Query args (e.g. tax_query).
      * @return array{open:WP_Post[],past:WP_Post[]}
      */
-    public static function get_open_and_past() {
-        $all  = self::query_events(array('posts_per_page' => 100));
+    public static function get_open_and_past(array $query_args = array()) {
+        $all  = self::query_events(array_merge(array('posts_per_page' => 100), $query_args));
         $open = array();
         $past = array();
         $now  = time();

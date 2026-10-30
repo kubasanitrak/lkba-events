@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.3] — 2026-10-30
+
+### Added
+
+- `[lkba_events_list]` attributes `category` / `cat` (taxonomy slug, e.g. `teacher-training`).
+
 ## [0.3.2] — 2026-10-29
 
 ### Fixed
