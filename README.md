@@ -15,7 +15,7 @@ Phase 3 — bank + Comgate card on events; my bookings + invoice download. Vouch
 | Shortcode | Purpose |
 |-----------|---------|
 | `[lkba_event_categories]` | Category list |
-| `[lkba_events_list book_page="/cesta-k-formi/"]` | Open + past events |
+| `[lkba_events_list category="teacher-training" book_page="rezervace-lkba"]` | Open + past events (optional category; `book_page` = slug / home-relative path / full URL / page ID — leading `/` is under `home_url()`, not domain root) |
 | `[lkba_event_book]` | Booking form + bank recap / Comgate redirect |
 | `[lkba_payment_success]` | Comgate return (paid / pending) |
 | `[lkba_payment_failed]` | Comgate return (cancel / fail) |

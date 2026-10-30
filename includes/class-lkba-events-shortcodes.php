@@ -43,6 +43,47 @@ class LKBA_Events_Shortcodes {
     }
 
     /**
+     * Resolve book_page shortcode attr for subdirectory installs.
+     *
+     * Accepts: page ID, slug, path relative to home (leading slash OK), or full URL.
+     * Leading "/" is NOT treated as domain-root — it is relative to home_url().
+     *
+     * @param string $raw
+     * @return string Absolute URL or empty.
+     */
+    public static function resolve_book_page_url($raw) {
+        $raw = trim((string) $raw);
+        if ($raw === '') {
+            return '';
+        }
+
+        if (ctype_digit($raw)) {
+            $link = get_permalink((int) $raw);
+            return $link ? esc_url($link) : '';
+        }
+
+        if (preg_match('#^https?://#i', $raw) || strpos($raw, '//') === 0) {
+            return esc_url($raw);
+        }
+
+        $path = trim($raw);
+        // Strip scheme-less host leftovers; keep path only.
+        $path = preg_replace('#^https?:#i', '', $path);
+        $path = ltrim($path, '/');
+        if ($path === '') {
+            return esc_url(home_url('/'));
+        }
+
+        $page = get_page_by_path($path);
+        if ($page instanceof WP_Post) {
+            $link = get_permalink($page);
+            return $link ? esc_url($link) : '';
+        }
+
+        return esc_url(home_url('/' . $path));
+    }
+
+    /**
      * @param array|string $atts
      * @return string
      */
@@ -66,7 +107,7 @@ class LKBA_Events_Shortcodes {
         }
 
         $split = LKBA_Events_Event::get_open_and_past($query_args);
-        $book_page = $atts['book_page'] !== '' ? esc_url($atts['book_page']) : '';
+        $book_page = self::resolve_book_page_url($atts['book_page']);
 
         $privacy = (int) get_option(LKBA_Events_Settings::OPTION_PRIVACY_PAGE, 0);
         $terms   = (int) get_option(LKBA_Events_Settings::OPTION_TERMS_PAGE, 0);

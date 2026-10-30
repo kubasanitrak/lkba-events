@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.5] — 2026-10-30
+
+### Fixed
+
+- `[lkba_events_list book_page]` resolves via `home_url()` / page slug (leading `/` is not domain-root). Works on subdirectory installs.
+
 ## [0.3.4] — 2026-10-30
 
 ### Changed
