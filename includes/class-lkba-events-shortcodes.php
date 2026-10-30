@@ -124,7 +124,9 @@ class LKBA_Events_Shortcodes {
      */
     public function render_book($atts = array()) {
         $atts = shortcode_atts(array(
-            'id' => 0,
+            'id'       => 0,
+            'category' => '',
+            'cat'      => '',
         ), $atts, 'lkba_event_book');
 
         $event_id = absint($atts['id']);
@@ -156,8 +158,31 @@ class LKBA_Events_Shortcodes {
             $error_msg = self::error_message($code);
         }
 
+        // Optional category filter when no concrete event is selected (shortcode or ?category= / ?cat=).
+        $cat_slug = $atts['category'] !== '' ? $atts['category'] : $atts['cat'];
+        if ($cat_slug === '') {
+            if (isset($_GET['category'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+                $cat_slug = sanitize_title(wp_unslash($_GET['category'])); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+            } elseif (isset($_GET['cat'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+                $cat_slug = sanitize_title(wp_unslash($_GET['cat'])); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+            }
+        } else {
+            $cat_slug = sanitize_title($cat_slug);
+        }
+
+        $query_args = array();
+        if ($cat_slug !== '' && !$event_id) {
+            $query_args['tax_query'] = array(
+                array(
+                    'taxonomy' => LKBA_Events_Post_Types::TAX_CATEGORY,
+                    'field'    => 'slug',
+                    'terms'    => $cat_slug,
+                ),
+            );
+        }
+
         $events_open = array();
-        foreach (LKBA_Events_Event::get_open_and_past()['open'] as $post) {
+        foreach (LKBA_Events_Event::get_open_and_past($query_args)['open'] as $post) {
             if (LKBA_Events_Event::get_booking_status($post->ID) === 'open') {
                 $events_open[] = $post;
             }

@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.6] — 2026-10-30
+
+### Added
+
+- `[lkba_event_book]` optional `category` / `cat` (shortcode or `?category=` / `?cat=`) filters term radios when no `event_id`.
+
 ## [0.3.5] — 2026-10-30
 
 ### Fixed
