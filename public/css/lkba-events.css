@@ -139,6 +139,26 @@
   margin: 0;
   cursor: pointer;
   user-select: none;
+  color: var(--LKBA-green, #00573f);
+  opacity: 0.4;
+  font-weight: 400;
+  transition: opacity 0.2s ease-out, color 0.2s ease-out, font-weight 0.2s ease-out;
+}
+
+.lkba-events .card-toggle--label.active {
+  opacity: 1;
+  font-weight: 700;
+  color: var(--LKBA-green, #00573f);
+}
+
+.lkba-events .card-toggle--label.inactive {
+  opacity: 0.4;
+  font-weight: 400;
+}
+
+.lkba-events .lkba-booking-form__pay-status {
+  text-align: center;
+  margin-top: 0.75rem;
 }
 
 .lkba-events .switch {

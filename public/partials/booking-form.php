@@ -154,7 +154,7 @@ $selected_method = $draft_method !== '' && in_array($draft_method, $payment_meth
                              id="lkba_events_payment_toggle_row"
                              <?php echo $both_pay ? '' : 'hidden'; ?>>
                             <div class="card-toggle--column">
-                                <p class="card-toggle--label card-toggle--label_false" id="lkba_events_toggle_bank"><?php echo esc_html__('Převodem', 'lkba-events'); ?></p>
+                                <h2 class="card-toggle--label card-toggle--label_false <?php echo $card_on ? 'inactive' : 'active'; ?>" id="lkba_events_toggle_bank"><?php echo esc_html__('Převodem', 'lkba-events'); ?></h2>
                             </div>
                             <label class="switch" for="lkba_events_payment_toggle">
                                 <input type="checkbox" id="lkba_events_payment_toggle"
@@ -163,9 +163,12 @@ $selected_method = $draft_method !== '' && in_array($draft_method, $payment_meth
                                 <span class="slider round"></span>
                             </label>
                             <div class="card-toggle--column">
-                                <p class="card-toggle--label card-toggle--label_true" id="lkba_events_toggle_card"><?php echo esc_html__('Kartou', 'lkba-events'); ?></p>
+                                <h2 class="card-toggle--label card-toggle--label_true <?php echo $card_on ? 'active' : 'inactive'; ?>" id="lkba_events_toggle_card"><?php echo esc_html__('Kartou', 'lkba-events'); ?></h2>
                             </div>
                         </div>
+                        <p class="lkba-booking-form__pay-status plain" id="lkba_events_pay_status" <?php echo $both_pay ? '' : 'hidden'; ?>>
+                            <?php echo esc_html($card_on ? __('Platba kartou (Comgate)', 'lkba-events') : __('Platba převodem (QR / proforma)', 'lkba-events')); ?>
+                        </p>
                         <p class="lkba-booking-form__pay-bank plain" id="lkba_events_pay_bank_only" <?php echo (!$both_pay && $has_bank) ? '' : 'hidden'; ?>>
                             <?php echo esc_html__('Platba převodem (QR / proforma)', 'lkba-events'); ?>
                         </p>
@@ -212,9 +215,12 @@ $selected_method = $draft_method !== '' && in_array($draft_method, $payment_meth
             var toggleRow = document.getElementById('lkba_events_payment_toggle_row');
             var bankOnly = document.getElementById('lkba_events_pay_bank_only');
             var cardOnly = document.getElementById('lkba_events_pay_card_only');
+            var payStatus = document.getElementById('lkba_events_pay_status');
             var labelBank = document.getElementById('lkba_events_toggle_bank');
             var labelCard = document.getElementById('lkba_events_toggle_card');
             var invToggle = document.getElementById('lkba_want_invoice');
+            var labelBankText = <?php echo wp_json_encode(__('Platba převodem (QR / proforma)', 'lkba-events')); ?>;
+            var labelCardText = <?php echo wp_json_encode(__('Platba kartou (Comgate)', 'lkba-events')); ?>;
             if (!payHidden || !toggle || !toggleRow) return;
 
             function selectedId() {
@@ -224,8 +230,20 @@ $selected_method = $draft_method !== '' && in_array($draft_method, $payment_meth
                 return eventHidden ? eventHidden.value : '';
             }
 
+            function setLabelState(el, on) {
+                if (!el) return;
+                el.classList.toggle('active', on);
+                el.classList.toggle('inactive', !on);
+            }
+
             function writePay() {
-                payHidden.value = toggle.checked ? 'comgate' : 'bank_transfer';
+                var card = !!toggle.checked;
+                payHidden.value = card ? 'comgate' : 'bank_transfer';
+                setLabelState(labelBank, !card);
+                setLabelState(labelCard, card);
+                if (payStatus && !toggleRow.hidden) {
+                    payStatus.textContent = card ? labelCardText : labelBankText;
+                }
             }
 
             function sync() {
@@ -236,6 +254,7 @@ $selected_method = $draft_method !== '' && in_array($draft_method, $payment_meth
                 var hasCard = methods.indexOf('comgate') !== -1;
                 var both = hasBank && hasCard;
                 toggleRow.hidden = !both;
+                if (payStatus) payStatus.hidden = !both;
                 if (bankOnly) bankOnly.hidden = !(!both && hasBank);
                 if (cardOnly) cardOnly.hidden = !(!both && hasCard);
                 if (both) {
@@ -243,9 +262,13 @@ $selected_method = $draft_method !== '' && in_array($draft_method, $payment_meth
                 } else if (hasCard && !hasBank) {
                     toggle.checked = true;
                     payHidden.value = 'comgate';
+                    setLabelState(labelBank, false);
+                    setLabelState(labelCard, true);
                 } else {
                     toggle.checked = false;
                     payHidden.value = 'bank_transfer';
+                    setLabelState(labelBank, true);
+                    setLabelState(labelCard, false);
                 }
             }
 

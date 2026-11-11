@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.10] — 2026-11-11
+
+### Fixed
+
+- Payment swipe: `Převodem` / `Kartou` get `.active` / `.inactive` on change + init; status text updates.
+
 ## [0.3.9] — 2026-11-11
 
 ### Changed
