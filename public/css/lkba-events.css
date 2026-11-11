@@ -9,6 +9,25 @@
 
 .lkba-events .workshop-terms--item {
   flex-basis: calc(100% / 3.5);
+  aspect-ratio: 3 / 2;
+  min-height: 0;
+}
+
+/*
+ * List tiles use <a.nice-input> outside <form.signup-form>, so theme
+ * `.signup-form .nice-input:hover` never applies. Mirror book-page hover.
+ */
+.lkba-events-list .workshop-terms--item:not(.pointer-none) .nice-input:hover,
+.lkba-events-list .workshop-terms--item:not(.pointer-none):hover .nice-input {
+  --tile-C: var(--color-bg, var(--LKBA-cream, #eee7d6));
+  --tile-bg: hsla(var(--LKBA-green-hsl, 163deg, 100%, 17%), 0.75);
+}
+
+.lkba-events-list .workshop-terms--item:not(.pointer-none) .nice-input:hover .workshop-terms--item_caption,
+.lkba-events-list .workshop-terms--item:not(.pointer-none):hover .workshop-terms--item_caption {
+  --tile-C: var(--color-bg, var(--LKBA-cream, #eee7d6));
+  --tile-bg: hsla(var(--LKBA-green-hsl, 163deg, 100%, 17%), 0.75);
+  color: var(--tile-C);
 }
 
 .lkba-events .workshop-terms--item_capacity {

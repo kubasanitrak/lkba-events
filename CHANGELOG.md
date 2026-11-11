@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.8] — 2026-11-11
+
+### Fixed
+
+- List open-term tile hover matches book-page legacy TT hover (list links sit outside `.signup-form`).
+- `.workshop-terms--item` keeps `aspect-ratio: 3 / 2`.
+
 ## [0.3.7] — 2026-10-30
 
 ### Fixed
