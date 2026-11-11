@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.11] — 2026-11-11
+
+### Fixed
+
+- Payment swipe: reliably update `p.lkba-booking-form__pay-status` text on change/input/init (class + id selectors).
+
 ## [0.3.10] — 2026-11-11
 
 ### Fixed
