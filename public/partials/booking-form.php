@@ -59,6 +59,7 @@ $selected_method = $draft_method !== '' && in_array($draft_method, $payment_meth
                             $hours   = LKBA_Events_Event::format_hours($post->ID);
                             $place   = $meta['place_name'];
                             $address = $meta['place_address'];
+                            $instructor = $meta['instructor'];
                             $show_loc = $place !== '' && stripos($place, 'Praha') === false;
                             $price   = LKBA_Events_Event::get_price($post->ID);
                             ?>
@@ -87,7 +88,8 @@ $selected_method = $draft_method !== '' && in_array($draft_method, $payment_meth
                                         <?php if ($hours !== '') : ?>
                                             <p class="workshop-terms--item_hour"><?php echo esc_html($hours); ?></p>
                                         <?php endif; ?>
-                                        <p class="workshop-terms--item_place"><?php echo esc_html(get_the_title($post)); ?></p>
+                                        <!-- <p class="workshop-terms--item_place"><?php #echo esc_html(get_the_title($post)); ?></p> -->
+                                        <p class="workshop-terms--item_place"><?php echo esc_html($instructor); ?></p>
                                         <p class="workshop-terms--item_hour"><?php echo esc_html(number_format_i18n($price, 0)); ?> Kč</p>
                                     </div>
                                 </label>
@@ -139,17 +141,38 @@ $selected_method = $draft_method !== '' && in_array($draft_method, $payment_meth
                         <input type="text" name="lkba_inv_dic" id="lkba_inv_dic" placeholder="DIČ" value="<?php echo esc_attr($d_inv['dic'] ?? ''); ?>">
                     </div>
 
-                    <fieldset class="signup-form--inner_row flex-col lkba-booking-form__payment" id="lkba_payment_methods">
-                        <legend><?php echo esc_html__('Způsob platby', 'lkba-events'); ?></legend>
-                        <div class="form-group lkba-booking-form__pay-bank" <?php echo in_array('bank_transfer', $payment_methods, true) ? '' : 'hidden'; ?>>
-                            <input type="radio" name="lkba_payment_method" id="lkba_pay_bank" value="bank_transfer" <?php checked($selected_method, 'bank_transfer'); ?>>
-                            <label for="lkba_pay_bank"><?php echo esc_html__('Bankovní převod (QR / proforma)', 'lkba-events'); ?></label>
+                    <?php
+                    $has_bank = in_array('bank_transfer', $payment_methods, true);
+                    $has_card = in_array('comgate', $payment_methods, true);
+                    $both_pay = $has_bank && $has_card;
+                    $card_on  = $selected_method === 'comgate';
+                    ?>
+                    <div class="signup-form--inner_row flex-col lkba-booking-form__payment" id="lkba_payment_methods">
+                        <input type="hidden" name="lkba_payment_method" id="lkba_events_payment_method"
+                               value="<?php echo esc_attr($selected_method); ?>">
+                        <div class="card-toggle--row lkba-payment-toggle lkba-booking-form__pay-toggle"
+                             id="lkba_events_payment_toggle_row"
+                             <?php echo $both_pay ? '' : 'hidden'; ?>>
+                            <div class="card-toggle--column">
+                                <p class="card-toggle--label card-toggle--label_false" id="lkba_events_toggle_bank"><?php echo esc_html__('Převodem', 'lkba-events'); ?></p>
+                            </div>
+                            <label class="switch" for="lkba_events_payment_toggle">
+                                <input type="checkbox" id="lkba_events_payment_toggle"
+                                       <?php checked($card_on); ?>
+                                       aria-label="<?php echo esc_attr__('Způsob platby', 'lkba-events'); ?>">
+                                <span class="slider round"></span>
+                            </label>
+                            <div class="card-toggle--column">
+                                <p class="card-toggle--label card-toggle--label_true" id="lkba_events_toggle_card"><?php echo esc_html__('Kartou', 'lkba-events'); ?></p>
+                            </div>
                         </div>
-                        <div class="form-group lkba-booking-form__pay-card" <?php echo in_array('comgate', $payment_methods, true) ? '' : 'hidden'; ?>>
-                            <input type="radio" name="lkba_payment_method" id="lkba_pay_card" value="comgate" <?php checked($selected_method, 'comgate'); ?>>
-                            <label for="lkba_pay_card"><?php echo esc_html__('Platební karta (Comgate)', 'lkba-events'); ?></label>
-                        </div>
-                    </fieldset>
+                        <p class="lkba-booking-form__pay-bank plain" id="lkba_events_pay_bank_only" <?php echo (!$both_pay && $has_bank) ? '' : 'hidden'; ?>>
+                            <?php echo esc_html__('Platba převodem (QR / proforma)', 'lkba-events'); ?>
+                        </p>
+                        <p class="lkba-booking-form__pay-card plain" id="lkba_events_pay_card_only" <?php echo (!$both_pay && $has_card) ? '' : 'hidden'; ?>>
+                            <?php echo esc_html__('Platba kartou (Comgate)', 'lkba-events'); ?>
+                        </p>
+                    </div>
 
                     <div class="signup-form--inner_row flex-col lkba-booking-form__legal">
                         <div class="form-group">
@@ -182,35 +205,64 @@ $selected_method = $draft_method !== '' && in_array($draft_method, $payment_meth
         <script>
         (function () {
             var map = <?php echo wp_json_encode($methods_by_event); ?>;
-            var hidden = document.getElementById('lkba_event_id');
+            var eventHidden = document.getElementById('lkba_event_id');
             var radios = document.querySelectorAll('input[name="lkba_event_id"]');
-            var bank = document.querySelector('.lkba-booking-form__pay-bank');
-            var card = document.querySelector('.lkba-booking-form__pay-card');
+            var payHidden = document.getElementById('lkba_events_payment_method');
+            var toggle = document.getElementById('lkba_events_payment_toggle');
+            var toggleRow = document.getElementById('lkba_events_payment_toggle_row');
+            var bankOnly = document.getElementById('lkba_events_pay_bank_only');
+            var cardOnly = document.getElementById('lkba_events_pay_card_only');
+            var labelBank = document.getElementById('lkba_events_toggle_bank');
+            var labelCard = document.getElementById('lkba_events_toggle_card');
             var invToggle = document.getElementById('lkba_want_invoice');
-            if (!bank || !card) return;
+            if (!payHidden || !toggle || !toggleRow) return;
 
             function selectedId() {
                 for (var i = 0; i < radios.length; i++) {
                     if (radios[i].checked) return radios[i].value;
                 }
-                return hidden ? hidden.value : '';
+                return eventHidden ? eventHidden.value : '';
+            }
+
+            function writePay() {
+                payHidden.value = toggle.checked ? 'comgate' : 'bank_transfer';
             }
 
             function sync() {
                 var id = selectedId();
-                if (hidden) hidden.value = id;
+                if (eventHidden) eventHidden.value = id;
                 var methods = map[String(id)] || ['bank_transfer'];
                 var hasBank = methods.indexOf('bank_transfer') !== -1;
                 var hasCard = methods.indexOf('comgate') !== -1;
-                bank.hidden = !hasBank;
-                card.hidden = !hasCard;
-                var bankRadio = bank.querySelector('input');
-                var cardRadio = card.querySelector('input');
-                if (hasBank && (!hasCard || (bankRadio && bankRadio.checked) || (cardRadio && !cardRadio.checked))) {
-                    if (bankRadio) bankRadio.checked = true;
-                } else if (hasCard && cardRadio) {
-                    cardRadio.checked = true;
+                var both = hasBank && hasCard;
+                toggleRow.hidden = !both;
+                if (bankOnly) bankOnly.hidden = !(!both && hasBank);
+                if (cardOnly) cardOnly.hidden = !(!both && hasCard);
+                if (both) {
+                    writePay();
+                } else if (hasCard && !hasBank) {
+                    toggle.checked = true;
+                    payHidden.value = 'comgate';
+                } else {
+                    toggle.checked = false;
+                    payHidden.value = 'bank_transfer';
                 }
+            }
+
+            toggle.addEventListener('change', writePay);
+            if (labelBank) {
+                labelBank.addEventListener('click', function () {
+                    if (toggleRow.hidden) return;
+                    toggle.checked = false;
+                    writePay();
+                });
+            }
+            if (labelCard) {
+                labelCard.addEventListener('click', function () {
+                    if (toggleRow.hidden) return;
+                    toggle.checked = true;
+                    writePay();
+                });
             }
 
             for (var i = 0; i < radios.length; i++) {
