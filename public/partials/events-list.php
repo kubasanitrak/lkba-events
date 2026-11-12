@@ -70,9 +70,9 @@ $render_tile = static function ($post, $status, $book_url, $interactive) {
                 <?php if ($hours !== '') : ?>
                     <p class="workshop-terms--item_hour"><?php echo esc_html($hours); ?></p>
                 <?php endif; ?>
-                <p class="workshop-terms--item_place lkba-event-card__place"><?php echo esc_html($title); ?></p>
+                <!-- <p class="workshop-terms--item_place lkba-event-card__place"><?php echo esc_html($title); ?></p> -->
                 <?php if ($meta['instructor'] !== '') : ?>
-                    <p class="lkba-event-card__instructor"><?php echo esc_html($meta['instructor']); ?></p>
+                    <p class="lkba-event-card__instructor strong"><?php echo esc_html($meta['instructor']); ?></p>
                 <?php endif; ?>
             </div>
 

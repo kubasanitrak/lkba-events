@@ -147,13 +147,13 @@
 
 .lkba-events .card-toggle--label.active {
   opacity: 1;
-  font-weight: 700;
+  /*font-weight: 700;*/
   color: var(--LKBA-green, #00573f);
 }
 
 .lkba-events .card-toggle--label.inactive {
   opacity: 0.4;
-  font-weight: 400;
+  /*font-weight: 400;*/
 }
 
 .lkba-events .lkba-booking-form__pay-status {
