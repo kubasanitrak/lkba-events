@@ -54,14 +54,14 @@ $selected_method = $draft_method !== '' && in_array($draft_method, $payment_meth
 
                     <div class="signup-form--inner_row flex-row workshop-terms full-W" id="lkba_event_tiles">
                         <?php foreach ($events_open as $post) :
-                            $meta    = LKBA_Events_Event::get_meta($post->ID);
-                            $date    = LKBA_Events_Event::format_date($post->ID);
-                            $hours   = LKBA_Events_Event::format_hours($post->ID);
-                            $place   = $meta['place_name'];
-                            $address = $meta['place_address'];
-                            $instructor = $meta['instructor'];
+                            $meta     = LKBA_Events_Event::get_meta($post->ID);
+                            $date     = LKBA_Events_Event::format_date($post->ID);
+                            $hours    = LKBA_Events_Event::format_hours($post->ID);
+                            $caption  = LKBA_Events_Event::format_caption_place($post->ID);
+                            $place    = $meta['place_name'];
+                            $studio   = $meta['place_address'];
                             $show_loc = $place !== '' && stripos($place, 'Praha') === false;
-                            $price   = LKBA_Events_Event::get_price($post->ID);
+                            $price    = LKBA_Events_Event::get_price($post->ID);
                             ?>
                             <div class="workshop-terms--item">
                                 <label class="nice-input radio-input workshop-terms--item_label">
@@ -76,7 +76,7 @@ $selected_method = $draft_method !== '' && in_array($draft_method, $payment_meth
                                         <div class="location">
                                             <p class="minor">
                                                 <span class="location_place strong"><?php echo esc_html($place); ?></span><?php
-                                                echo $address !== '' ? ', ' . esc_html($address) : '';
+                                                echo $studio !== '' ? ', ' . esc_html($studio) : '';
                                                 ?>
                                             </p>
                                         </div>
@@ -88,8 +88,9 @@ $selected_method = $draft_method !== '' && in_array($draft_method, $payment_meth
                                         <?php if ($hours !== '') : ?>
                                             <p class="workshop-terms--item_hour"><?php echo esc_html($hours); ?></p>
                                         <?php endif; ?>
-                                        <!-- <p class="workshop-terms--item_place"><?php #echo esc_html(get_the_title($post)); ?></p> -->
-                                        <p class="workshop-terms--item_place"><?php echo esc_html($instructor); ?></p>
+                                        <?php if ($caption !== '') : ?>
+                                            <p class="workshop-terms--item_place"><?php echo esc_html($caption); ?></p>
+                                        <?php endif; ?>
                                         <p class="workshop-terms--item_hour"><?php echo esc_html(number_format_i18n($price, 0)); ?> Kč</p>
                                     </div>
                                 </label>

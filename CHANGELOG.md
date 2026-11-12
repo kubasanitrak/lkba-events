@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.12] — 2026-11-12
+
+### Changed
+
+- List/book tiles: caption uses category + instructor (e.g. “Teacher Training s Terezou Š.”), not full post title; location = place + studio.
+
 ## [0.3.11] — 2026-11-11
 
 ### Fixed

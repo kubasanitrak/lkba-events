@@ -23,9 +23,9 @@ $render_tile = static function ($post, $status, $book_url, $interactive) {
     $meta     = LKBA_Events_Event::get_meta($post->ID);
     $date     = LKBA_Events_Event::format_date($post->ID);
     $hours    = LKBA_Events_Event::format_hours($post->ID);
-    $title    = get_the_title($post);
+    $caption  = LKBA_Events_Event::format_caption_place($post->ID);
     $place    = $meta['place_name'];
-    $address  = $meta['place_address'];
+    $studio   = $meta['place_address'];
     $show_loc = $place !== '' && stripos($place, 'Praha') === false;
     $capacity_label = '';
     if ($status === 'full') {
@@ -57,7 +57,7 @@ $render_tile = static function ($post, $status, $book_url, $interactive) {
                 <div class="location">
                     <p class="minor">
                         <span class="location_place strong"><?php echo esc_html($place); ?></span><?php
-                        echo $address !== '' ? ', ' . esc_html($address) : '';
+                        echo $studio !== '' ? ', ' . esc_html($studio) : '';
                         ?>
                     </p>
                 </div>
@@ -70,9 +70,8 @@ $render_tile = static function ($post, $status, $book_url, $interactive) {
                 <?php if ($hours !== '') : ?>
                     <p class="workshop-terms--item_hour"><?php echo esc_html($hours); ?></p>
                 <?php endif; ?>
-                <!-- <p class="workshop-terms--item_place lkba-event-card__place"><?php echo esc_html($title); ?></p> -->
-                <?php if ($meta['instructor'] !== '') : ?>
-                    <p class="lkba-event-card__instructor strong"><?php echo esc_html($meta['instructor']); ?></p>
+                <?php if ($caption !== '') : ?>
+                    <p class="workshop-terms--item_place lkba-event-card__place"><?php echo esc_html($caption); ?></p>
                 <?php endif; ?>
             </div>
 
