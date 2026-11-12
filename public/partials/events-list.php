@@ -67,7 +67,7 @@ $render_tile = static function ($post, $status, $book_url, $interactive) {
                 <?php if ($date !== '') : ?>
                     <h2 class="workshop-terms--item_date lkba-event-card__when"><?php echo esc_html($date); ?></h2>
                 <?php endif; ?>
-                <?php if ($hours !== '') : ?>
+                <?php if ($interactive && $status === 'open' && $hours !== '') : ?>
                     <p class="workshop-terms--item_hour"><?php echo esc_html($hours); ?></p>
                 <?php endif; ?>
                 <?php if ($caption !== '') : ?>

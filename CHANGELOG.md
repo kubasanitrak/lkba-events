@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.13] — 2026-11-12
+
+### Changed
+
+- List tiles: omit hours line on past/closed/full (closed-style); open terms keep date + hours.
+
 ## [0.3.12] — 2026-11-12
 
 ### Changed
