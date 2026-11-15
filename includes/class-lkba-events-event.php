@@ -318,9 +318,11 @@ class LKBA_Events_Event {
             $company_methods = array('bank_transfer');
         }
 
-        // If company lists comgate but Comgate not configured, drop it.
-        if (in_array('comgate', $company_methods, true) && class_exists('LKBA_Payments_Comgate')) {
-            if (!LKBA_Payments_Comgate::for_company($company)->is_configured()) {
+        // Offer card when company payment_methods include it and Comgate is enabled.
+        // Full credentials are still required at gateway start (is_configured).
+        if (in_array('comgate', $company_methods, true) && class_exists('LKBA_Payments_Settings')) {
+            $company_row = LKBA_Payments_Settings::get_company($company);
+            if (empty($company_row['comgate_enabled'])) {
                 $company_methods = array_values(array_diff($company_methods, array('comgate')));
             }
         }

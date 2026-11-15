@@ -267,8 +267,20 @@ $selected_method = $draft_method !== '' && in_array($draft_method, $payment_meth
                 var payRadios = tiles.querySelectorAll('.lkba-pay-tile__input');
                 for (var i = 0; i < payRadios.length; i++) {
                     var tile = payRadios[i].closest('.lkba-pay-tile');
-                    if (tile) tile.classList.toggle('is-selected', !!payRadios[i].checked);
+                    if (tile) tile.classList.toggle('is-selected', !!payRadios[i].checked && !payRadios[i].disabled);
                 }
+            }
+
+            function selectPay(method) {
+                if (tiles.hidden) return;
+                if (method === 'comgate' && !cardRadio.disabled) {
+                    cardRadio.checked = true;
+                    bankRadio.checked = false;
+                } else if (!bankRadio.disabled) {
+                    bankRadio.checked = true;
+                    cardRadio.checked = false;
+                }
+                paintSelected();
             }
 
             function sync() {
@@ -288,8 +300,6 @@ $selected_method = $draft_method !== '' && in_array($draft_method, $payment_meth
                     if (!bankRadio.checked && !cardRadio.checked) {
                         bankRadio.checked = true;
                     }
-                    if (!hasBank && cardRadio) cardRadio.checked = true;
-                    if (!hasCard && bankRadio) bankRadio.checked = true;
                 } else if (hasCard && !hasBank) {
                     bankRadio.checked = false;
                     cardRadio.checked = false;
@@ -302,11 +312,17 @@ $selected_method = $draft_method !== '' && in_array($draft_method, $payment_meth
                 paintSelected();
             }
 
+            tiles.addEventListener('click', function (e) {
+                var tile = e.target.closest('.lkba-pay-tile');
+                if (!tile || tiles.hidden) return;
+                var input = tile.querySelector('.lkba-pay-tile__input');
+                if (!input || input.disabled) return;
+                e.preventDefault();
+                selectPay(input.value);
+            });
             tiles.addEventListener('change', paintSelected);
             bankRadio.addEventListener('change', paintSelected);
             cardRadio.addEventListener('change', paintSelected);
-            bankRadio.addEventListener('click', paintSelected);
-            cardRadio.addEventListener('click', paintSelected);
 
             for (var i = 0; i < radios.length; i++) {
                 radios[i].addEventListener('change', sync);

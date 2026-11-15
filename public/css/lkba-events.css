@@ -134,6 +134,11 @@
   margin-top: 0.35rem;
 }
 
+/* display:flex above must not defeat the HTML hidden attribute. */
+.lkba-events .lkba-pay-tiles[hidden] {
+  display: none !important;
+}
+
 .lkba-events .lkba-pay-tile {
   position: relative;
   flex: 1 1 calc(50% - 0.5rem);
