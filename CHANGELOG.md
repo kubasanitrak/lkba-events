@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.14] — 2026-11-15
+
+### Changed
+
+- Booking payment chooser: swipe slider replaced with tile radios (Bankovní převod / Platební karta); still POSTs `lkba_payment_method` (`bank_transfer` / `comgate`). Icons in `public/assets/payment/`.
+
 ## [0.3.13] — 2026-11-12
 
 ### Changed
