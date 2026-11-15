@@ -154,7 +154,7 @@ $selected_method = $draft_method !== '' && in_array($draft_method, $payment_meth
                         </div>
                         <div class="lkba-pay-tiles" id="lkba_events_pay_tiles"
                              <?php echo $both_pay ? '' : 'hidden'; ?>>
-                            <label class="lkba-pay-tile" for="lkba_events_pay_bank">
+                            <label class="lkba-pay-tile<?php echo $selected_method === 'bank_transfer' ? ' is-selected' : ''; ?>" for="lkba_events_pay_bank">
                                 <input class="lkba-pay-tile__input" type="radio"
                                        name="lkba_payment_method"
                                        id="lkba_events_pay_bank"
@@ -167,7 +167,7 @@ $selected_method = $draft_method !== '' && in_array($draft_method, $payment_meth
                                     <span class="lkba-pay-tile__label"><?php echo esc_html__('Bankovní převod', 'lkba-events'); ?></span>
                                 </span>
                             </label>
-                            <label class="lkba-pay-tile" for="lkba_events_pay_card">
+                            <label class="lkba-pay-tile<?php echo $selected_method === 'comgate' ? ' is-selected' : ''; ?>" for="lkba_events_pay_card">
                                 <input class="lkba-pay-tile__input" type="radio"
                                        name="lkba_payment_method"
                                        id="lkba_events_pay_card"
@@ -263,6 +263,14 @@ $selected_method = $draft_method !== '' && in_array($draft_method, $payment_meth
                 }
             }
 
+            function paintSelected() {
+                var payRadios = tiles.querySelectorAll('.lkba-pay-tile__input');
+                for (var i = 0; i < payRadios.length; i++) {
+                    var tile = payRadios[i].closest('.lkba-pay-tile');
+                    if (tile) tile.classList.toggle('is-selected', !!payRadios[i].checked);
+                }
+            }
+
             function sync() {
                 var id = selectedId();
                 if (eventHidden) eventHidden.value = id;
@@ -291,12 +299,20 @@ $selected_method = $draft_method !== '' && in_array($draft_method, $payment_meth
                     cardRadio.checked = false;
                     ensureFallback('bank_transfer');
                 }
+                paintSelected();
             }
+
+            tiles.addEventListener('change', paintSelected);
+            bankRadio.addEventListener('change', paintSelected);
+            cardRadio.addEventListener('change', paintSelected);
+            bankRadio.addEventListener('click', paintSelected);
+            cardRadio.addEventListener('click', paintSelected);
 
             for (var i = 0; i < radios.length; i++) {
                 radios[i].addEventListener('change', sync);
             }
             sync();
+            paintSelected();
 
             if (invToggle) {
                 invToggle.addEventListener('change', function () {

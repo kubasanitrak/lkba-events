@@ -144,33 +144,42 @@
 }
 
 .lkba-events .lkba-pay-tile__input {
+  /* Theme hides radios via display:none; keep in-flow for :checked sibling styles. */
   position: absolute;
   opacity: 0;
-  width: 0;
-  height: 0;
+  width: 1px;
+  height: 1px;
   margin: 0;
+  padding: 0;
+  border: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
   pointer-events: none;
+  display: block !important;
+  visibility: visible !important;
 }
 
 .lkba-events .lkba-pay-tile__face {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  /*align-items: center;*/
   justify-content: center;
   gap: 0.55rem;
   min-height: 6.75rem;
-  padding: 1rem 0.85rem 0.9rem;
-  border: 2px solid var(--lkba-pay-green);
+  padding: 1rem calc(var(--pad-R) * .35) calc(var(--pad-R) * .35);
+  border: 1px solid var(--lkba-pay-green);
   background: transparent;
   color: inherit;
-  text-align: center;
+  /*text-align: center;*/
   transition: background-color 0.18s ease-out, color 0.18s ease-out, border-color 0.18s ease-out;
 }
 
 .lkba-events .lkba-pay-tile__icon {
   display: block;
-  width: 2.75rem;
-  height: 2.15rem;
+  width: 26px;
+  height: 20px;
   flex-shrink: 0;
 }
 
@@ -195,8 +204,17 @@
   color: inherit;
 }
 
+.lkba-events .lkba-pay-tile:hover,
+.lkba-events .lkba-pay-tile:focus-within,
+.lkba-events .lkba-pay-tile.is-selected,
+.lkba-events .lkba-pay-tile:has(.lkba-pay-tile__input:checked) {
+  color: #fff;
+}
+
 .lkba-events .lkba-pay-tile:hover .lkba-pay-tile__face,
 .lkba-events .lkba-pay-tile:focus-within .lkba-pay-tile__face,
+.lkba-events .lkba-pay-tile.is-selected .lkba-pay-tile__face,
+.lkba-events .lkba-pay-tile:has(.lkba-pay-tile__input:checked) .lkba-pay-tile__face,
 .lkba-events .lkba-pay-tile__input:checked + .lkba-pay-tile__face {
   background-color: var(--lkba-pay-green);
   border-color: var(--lkba-pay-green);
@@ -205,6 +223,8 @@
 
 .lkba-events .lkba-pay-tile:hover .lkba-pay-tile__icon--card img,
 .lkba-events .lkba-pay-tile:focus-within .lkba-pay-tile__icon--card img,
+.lkba-events .lkba-pay-tile.is-selected .lkba-pay-tile__icon--card img,
+.lkba-events .lkba-pay-tile:has(.lkba-pay-tile__input:checked) .lkba-pay-tile__icon--card img,
 .lkba-events .lkba-pay-tile__input:checked + .lkba-pay-tile__face .lkba-pay-tile__icon--card img {
   filter: brightness(0) invert(1);
 }
