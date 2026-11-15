@@ -3,12 +3,36 @@
  * On lkba_theme, workshop/signup look comes from theme style.css.
  */
 
+.flow > .lkba-events * + :not(.workshop-terms--item):not(.lkba-pay-tile):not(.lkba-pay-tile__face):not(.lkba-pay-tile__icon):not(.lkba-pay-tile__label):not(.workshop-terms--item_caption):not(.workshop-terms--item_place):not(.workshop-terms--item_hour) {
+  margin-block-start: var(--flow-space, 1em);
+}
+
+
 .lkba-events .workshop-terms {
   flex-wrap: wrap;
 }
 
 .lkba-events .workshop-terms--item {
   flex-basis: calc(100% / 3.5);
+  aspect-ratio: 3 / 2;
+  min-height: 0;
+}
+
+/*
+ * List tiles use <a.nice-input> outside <form.signup-form>, so theme
+ * `.signup-form .nice-input:hover` never applies. Mirror book-page hover.
+ */
+.lkba-events-list .workshop-terms--item:not(.pointer-none) .nice-input:hover,
+.lkba-events-list .workshop-terms--item:not(.pointer-none):hover .nice-input {
+  --tile-C: var(--color-bg, var(--LKBA-cream, #eee7d6));
+  --tile-bg: hsla(var(--LKBA-green-hsl, 163deg, 100%, 17%), 0.75);
+}
+
+.lkba-events-list .workshop-terms--item:not(.pointer-none) .nice-input:hover .workshop-terms--item_caption,
+.lkba-events-list .workshop-terms--item:not(.pointer-none):hover .workshop-terms--item_caption {
+  --tile-C: var(--color-bg, var(--LKBA-cream, #eee7d6));
+  --tile-bg: hsla(var(--LKBA-green-hsl, 163deg, 100%, 17%), 0.75);
+  color: var(--tile-C);
 }
 
 .lkba-events .workshop-terms--item_capacity {
@@ -43,6 +67,7 @@
   transition: color 0.2s ease-out 0s;
   position: absolute;
   top: calc(var(--pad-T, 1rem) * 0.75);
+  margin-block-start: var(--flow-space, 1em);
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
@@ -95,11 +120,101 @@
   padding: 0;
 }
 
+/* Payment method tiles — radio cards (bank / Comgate). */
+.lkba-events {
+  --lkba-pay-green: var(--LKBA-green, #00573f);
+  --lkba-pay-cream: var(--LKBA-cream, #eee7d6);
+}
+
+.lkba-events .lkba-pay-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  width: 100%;
+  margin-top: 0.35rem;
+}
+
+.lkba-events .lkba-pay-tile {
+  position: relative;
+  flex: 1 1 calc(50% - 0.5rem);
+  min-width: 9.5rem;
+  margin: 0;
+  cursor: pointer;
+  color: var(--lkba-pay-green);
+}
+
+.lkba-events .lkba-pay-tile__input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+  pointer-events: none;
+}
+
+.lkba-events .lkba-pay-tile__face {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-height: 6.75rem;
+  padding: 1rem 0.85rem 0.9rem;
+  border: 2px solid var(--lkba-pay-green);
+  background: transparent;
+  color: inherit;
+  text-align: center;
+  transition: background-color 0.18s ease-out, color 0.18s ease-out, border-color 0.18s ease-out;
+}
+
+.lkba-events .lkba-pay-tile__icon {
+  display: block;
+  width: 2.75rem;
+  height: 2.15rem;
+  flex-shrink: 0;
+}
+
+.lkba-events .lkba-pay-tile__icon--bank {
+  background-color: currentColor;
+  -webkit-mask: var(--lkba-pay-icon) center / contain no-repeat;
+  mask: var(--lkba-pay-icon) center / contain no-repeat;
+}
+
+.lkba-events .lkba-pay-tile__icon--card img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: filter 0.18s ease-out;
+}
+
+.lkba-events .lkba-pay-tile__label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: inherit;
+}
+
+.lkba-events .lkba-pay-tile:hover .lkba-pay-tile__face,
+.lkba-events .lkba-pay-tile:focus-within .lkba-pay-tile__face,
+.lkba-events .lkba-pay-tile__input:checked + .lkba-pay-tile__face {
+  background-color: var(--lkba-pay-green);
+  border-color: var(--lkba-pay-green);
+  color: #fff;
+}
+
+.lkba-events .lkba-pay-tile:hover .lkba-pay-tile__icon--card img,
+.lkba-events .lkba-pay-tile:focus-within .lkba-pay-tile__icon--card img,
+.lkba-events .lkba-pay-tile__input:checked + .lkba-pay-tile__face .lkba-pay-tile__icon--card img {
+  filter: brightness(0) invert(1);
+}
+
 @media screen and (orientation: landscape) {
   .lkba-events .location {
-    top: calc(var(--pad-T, 1rem) * 0.5);
+
+    top: calc(var(--pad-T, 1rem) * .75);
   }
   .lkba-events .workshop-terms--item_label {
-    padding: calc(var(--pad-T, 1rem) * 1.875) calc(var(--pad-R, 1rem) * 0.75) calc(var(--pad-T, 1rem) * 0.5);
+    padding: calc(var(--pad-T, 1rem) * 1.75) calc(var(--pad-R, 1rem) * 0.75) calc(var(--pad-T, 1rem) * 0.5);
   }
 }

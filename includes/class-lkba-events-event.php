@@ -254,6 +254,43 @@ class LKBA_Events_Event {
     }
 
     /**
+     * Primary event category name (lkba_event_cat).
+     *
+     * @param int $event_id
+     * @return string
+     */
+    public static function get_primary_category_name($event_id) {
+        $terms = get_the_terms((int) $event_id, LKBA_Events_Post_Types::TAX_CATEGORY);
+        if (!is_array($terms) || !$terms) {
+            return '';
+        }
+        return (string) $terms[0]->name;
+    }
+
+    /**
+     * Tile caption line: "Teacher Training s Terezou Š." (category + instructor).
+     * Does not use the full post title.
+     *
+     * @param int $event_id
+     * @return string
+     */
+    public static function format_caption_place($event_id) {
+        $cat        = self::get_primary_category_name($event_id);
+        $instructor = trim((string) self::get_meta($event_id)['instructor']);
+
+        if ($cat !== '' && $instructor !== '') {
+            if (preg_match('/^s[\s\x{00a0}]/u', $instructor)) {
+                return $cat . ' ' . $instructor;
+            }
+            return $cat . ' s ' . $instructor;
+        }
+        if ($cat !== '') {
+            return $cat;
+        }
+        return $instructor;
+    }
+
+    /**
      * Payment methods allowed for this event ∩ company credentials.
      *
      * @param int $event_id

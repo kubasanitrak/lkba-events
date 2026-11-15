@@ -1,5 +1,48 @@
 # Changelog
 
+## [0.3.14] — 2026-11-15
+
+### Changed
+
+- Booking payment chooser: swipe slider replaced with tile radios (Bankovní převod / Platební karta); still POSTs `lkba_payment_method` (`bank_transfer` / `comgate`). Icons in `public/assets/payment/`.
+
+## [0.3.13] — 2026-11-12
+
+### Changed
+
+- List tiles: omit hours line on past/closed/full (closed-style); open terms keep date + hours.
+
+## [0.3.12] — 2026-11-12
+
+### Changed
+
+- List/book tiles: caption uses category + instructor (e.g. “Teacher Training s Terezou Š.”), not full post title; location = place + studio.
+
+## [0.3.11] — 2026-11-11
+
+### Fixed
+
+- Payment swipe: reliably update `p.lkba-booking-form__pay-status` text on change/input/init (class + id selectors).
+
+## [0.3.10] — 2026-11-11
+
+### Fixed
+
+- Payment swipe: `Převodem` / `Kartou` get `.active` / `.inactive` on change + init; status text updates.
+
+## [0.3.9] — 2026-11-11
+
+### Changed
+
+- Booking payment chooser: legacy swipe slider (`Převodem` / `Kartou`) when both bank + card allowed; still POSTs `lkba_payment_method`.
+
+## [0.3.8] — 2026-11-11
+
+### Fixed
+
+- List open-term tile hover matches book-page legacy TT hover (list links sit outside `.signup-form`).
+- `.workshop-terms--item` keeps `aspect-ratio: 3 / 2`.
+
 ## [0.3.7] — 2026-10-30
 
 ### Fixed
