@@ -240,6 +240,6 @@
     top: calc(var(--pad-T, 1rem) * .75);
   }
   .lkba-events .workshop-terms--item_label {
-    padding: calc(var(--pad-T, 1rem) * 1.75) calc(var(--pad-R, 1rem) * 0.75) calc(var(--pad-T, 1rem) * 0.5);
+    padding: calc(var(--pad-T, 1rem) * 1.75) calc(var(--pad-R, 1rem) * 0. 5) calc(var(--pad-T, 1rem) * 0.5);
   }
 }
